@@ -1,0 +1,23 @@
+# Build outputs
+[Bb]in/
+[Oo]bj/
+
+# Visual Studio / Rider
+.vs/
+.idea/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# Test & coverage
+*.log
+
+# OS
+Thumbs.db
+Desktop.ini
+.DS_Store
+
+# MelonLoader-generated settings (keep local only)
+*.cfg
+UserData/
