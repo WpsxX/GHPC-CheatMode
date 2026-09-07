@@ -6,6 +6,8 @@ Built by integrating and hardening the ideas behind four community mods: [GHPC_A
 
 > ⚠️ **Cheat mod.** Intended for single-player / private testing only. Not for competitive multiplayer.
 
+> 🌐 **Bilingual viewer:** prefer switching between English / 中文 *without leaving the page*? Open the interactive **[README.html](docs/README.html)** (keeps your reading position when toggling languages). Or switch to the [中文版 README](README.zh-CN.md).
+
 ---
 
 ## Table of Contents
