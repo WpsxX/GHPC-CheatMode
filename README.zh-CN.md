@@ -1,5 +1,14 @@
 # CheatMode for Gunner, HEAT, PC!
 
+<div align="center">
+
+[![English](https://img.shields.io/badge/English-0969da?style=flat-square)](README.md)
+[![简体中文](https://img.shields.io/badge/简体中文-2ea44f?style=flat-square)](README.zh-CN.md)
+
+[English](README.md) · **简体中文** · *你正在阅读：简体中文*
+
+</div>
+
 一个整合版 [Gunner, HEAT, PC!](https://store.steampowered.com/app/1705180/Gunner_HEAT_PC/) MelonLoader 作弊模组：把 **无敌、无限弹药 / 无需装填、无限与秒达火力支援、ESP** 合并进 **一个 DLL**，并加入 **「玩家 / 友军」粒度控制** 与 **火炮阵营识别伤害**，同时刻意让**敌方单位与脚本剧情保持原版行为**。
 
 本项目整合并加固了四个社区 mod 的思路：[GHPC_Artillery_Rework](https://github.com/QwertyRyo/GHPC_Artillery_Rework) · [InfiniteAmmo](https://github.com/Bluehawk8908/InfiniteAmmo) · [Invincible-Tank](https://github.com/QwertyRyo/Invincible-Tank) · [GHPCESP](https://github.com/k4yt3x/GHPCESP)。详细对比见 [COMPARISON.md](docs/COMPARISON.md)。

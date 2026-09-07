@@ -1,5 +1,14 @@
 # CheatMode for Gunner, HEAT, PC!
 
+<div align="center">
+
+[![English](https://img.shields.io/badge/English-0969da?style=flat-square)](README.md)
+[![简体中文](https://img.shields.io/badge/简体中文-2ea44f?style=flat-square)](README.zh-CN.md)
+
+**English** · [简体中文](README.zh-CN.md) · *You are reading: English*
+
+</div>
+
 An all-in-one MelonLoader cheat mod for [Gunner, HEAT, PC!](https://store.steampowered.com/app/1705180/Gunner_HEAT_PC/) that merges **invincibility, infinite ammo / no-reload, unlimited & instant fire support, and ESP** into a **single DLL**, adds **player-vs-friendly granularity** and **faction-aware artillery damage**, and is carefully scoped so enemy units and scripted campaign events keep their vanilla behavior.
 
 Built by integrating and hardening the ideas behind four community mods: [GHPC_Artillery_Rework](https://github.com/QwertyRyo/GHPC_Artillery_Rework) · [InfiniteAmmo](https://github.com/Bluehawk8908/InfiniteAmmo) · [Invincible-Tank](https://github.com/QwertyRyo/Invincible-Tank) · [GHPCESP](https://github.com/k4yt3x/GHPCESP). See the [detailed comparison](docs/COMPARISON.en.md).
