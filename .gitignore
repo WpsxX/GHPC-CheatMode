@@ -21,3 +21,6 @@ Desktop.ini
 # MelonLoader-generated settings (keep local only)
 *.cfg
 UserData/
+
+# Local release packaging (artifacts attach to GitHub Releases, not committed)
+*.zip
