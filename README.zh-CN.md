@@ -5,7 +5,7 @@
 [![English](https://img.shields.io/badge/English-0969da?style=flat-square)](README.md)
 [![简体中文](https://img.shields.io/badge/简体中文-2ea44f?style=flat-square)](README.zh-CN.md)
 
-[English](README.md) · **简体中文** · *你正在阅读：简体中文*
+[English](README.md) · **简体中文** 
 
 </div>
 
