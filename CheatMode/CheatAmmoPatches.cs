@@ -409,4 +409,51 @@ namespace CheatMode
             return false; // Skip the original method: succeed directly without deducting stock.
         }
     }
+
+    /// <summary>
+    /// Fixes pooled rounds losing their per-round fuse ("zeroing") data at high rates of fire.
+    ///
+    /// Vanilla sequence for a round taken from the object pool:
+    ///   1. RestoreFromPool() only raises the private _needsRestart flag;
+    ///   2. Init() -> resetLocalValues() clears the ranged fuse (_rangedFuseCountdown = 0,
+    ///      _rangedFuseActive = false);
+    ///   3. the real per-round fuse value is written in Start(), which vanilla defers until the
+    ///      next DoUpdate() (it restarts there when _needsRestart is still set).
+    ///
+    /// That leaves a window in which the live round is already spawned but still carries a zeroed
+    /// fuse. Ammunition feeds push the next round immediately (vanilla AutoFeed calls
+    /// FeedNewRound() inside WeaponFired), so at sustained/high rates of fire a following Init()
+    /// can land inside that window and re-clear the pending state; the affected round then
+    /// satisfies its fuse instantly and detonates far short of the intended point.
+    ///
+    /// Running the pending restart right after Init() writes the fuse value in the same call, so
+    /// every round leaves Init() holding its own correct value that later rounds cannot clear.
+    /// Nothing else about firing is touched: no reload behaviour, no feed timing, no ballistics.
+    /// </summary>
+    [HarmonyPatch(typeof(GHPC.Weapons.LiveRound), "Init")]
+    public static class LiveRoundInitFuseFixPatch
+    {
+        private static readonly AccessTools.FieldRef<GHPC.Weapons.LiveRound, bool> NeedsRestartRef =
+            AccessTools.FieldRefAccess<GHPC.Weapons.LiveRound, bool>("_needsRestart");
+
+        private static void Postfix(GHPC.Weapons.LiveRound __instance)
+        {
+            if (__instance == null)
+            {
+                return;
+            }
+
+            // Only pooled rounds pending a restart are affected; a fresh round has already had
+            // its fuse written by its own Start().
+            if (!NeedsRestartRef(__instance))
+            {
+                return;
+            }
+
+            // Restart() clears _needsRestart and runs Start(), which restores
+            // _rangedFuseCountdown from Info.RangedFuseTime. Vanilla's own DoUpdate check then
+            // sees _needsRestart == false and will not run it a second time.
+            __instance.Restart();
+        }
+    }
 }

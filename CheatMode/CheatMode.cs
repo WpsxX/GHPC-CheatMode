@@ -17,7 +17,7 @@ using HarmonyLib;
 using MelonLoader;
 using UnityEngine;
 
-[assembly: MelonInfo(typeof(CheatMode.CheatModeMod), "CheatMode", "1.6.0", "CheatMode")]
+[assembly: MelonInfo(typeof(CheatMode.CheatModeMod), "CheatMode", "1.6.1", "CheatMode")]
 [assembly: MelonGame("Radian Simulations LLC", "GHPC")]
 
 namespace CheatMode

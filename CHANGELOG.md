@@ -2,6 +2,11 @@
 
 All notable changes to the **CheatMode** all-in-one mod.
 
+## [1.6.1] — 2026-09-08
+
+### Fixed
+- **Rounds losing their ranged-fuse ("zeroing") data at sustained/high rates of fire.** When a `LiveRound` is taken from the object pool, `RestoreFromPool()` only raises `_needsRestart`, then `Init() -> resetLocalValues()` clears `_rangedFuseCountdown` to `0`; the per-round fuse value is written in `Start()`, which vanilla defers until the next `DoUpdate()`. Because ammunition feeds push the next round immediately (`AutoFeed -> FeedNewRound()` inside `WeaponFired`), a following `Init()` could land inside that window and re-clear the pending state, so the affected round satisfied its fuse instantly and detonated far short of the intended point — an occasional "rounds land way too close" symptom while firing fast. `LiveRoundInitFuseFixPatch` now runs the pending restart at the end of `Init()`, so every round leaves `Init()` holding its own correct fuse value that later rounds cannot clear. No reload behaviour, feed timing or ballistics are changed.
+
 ## [1.6.0] — 2026-09-08
 Initial public/release snapshot derived from the `CheatMode` integration project. This release:
 
