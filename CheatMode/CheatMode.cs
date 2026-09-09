@@ -17,7 +17,7 @@ using HarmonyLib;
 using MelonLoader;
 using UnityEngine;
 
-[assembly: MelonInfo(typeof(CheatMode.CheatModeMod), "CheatMode", "1.6.1", "CheatMode")]
+[assembly: MelonInfo(typeof(CheatMode.CheatModeMod), "CheatMode", "1.6.2", "CheatMode")]
 [assembly: MelonGame("Radian Simulations LLC", "GHPC")]
 
 namespace CheatMode
@@ -52,6 +52,8 @@ namespace CheatMode
         internal static MelonPreferences_Entry<int> ArtilleryVolleyRounds;
         internal static MelonPreferences_Entry<float> ArtilleryTimeToTarget;
         internal static MelonPreferences_Entry<float> ArtilleryAccuracy;
+        internal static MelonPreferences_Entry<float> CasAccuracy;
+        internal static MelonPreferences_Entry<bool> CasSpreadTargets;
         internal static MelonPreferences_Entry<bool> ESPEnabled;
 
         // ESP unit lists
@@ -70,8 +72,15 @@ namespace CheatMode
         private static readonly System.Reflection.MethodInfo VehicleLoadedClipTypeSetter =
             AccessTools.PropertySetter(typeof(GHPC.Weapons.AmmoFeed), "LoadedClipType");
 
-        /// <summary>Refills the given ammunition feed's current clip queue to its full capacity (without affecting the round already chambered).</summary>
-        internal static void RefillVehicleLoadedClip(GHPC.Weapons.AmmoFeed feed, AmmoType.AmmoClip clipType)
+        /// <summary>
+        /// Refills the given ammunition feed's current clip queue.
+        /// When <paramref name="keepChamberedRound"/> is true and a round is already chambered (an
+        /// ammo-type switch keeps the old type's round in the breech), the queue is filled to
+        /// Capacity - 1 so "clip + breech" still equals exactly one full clip; otherwise the switch
+        /// would silently add one extra round. Keep it false for the pre-fire refill, where that
+        /// chambered round is about to be fired.
+        /// </summary>
+        internal static void RefillVehicleLoadedClip(GHPC.Weapons.AmmoFeed feed, AmmoType.AmmoClip clipType, bool keepChamberedRound = false)
         {
             if (feed == null || clipType == null || clipType.Capacity <= 0
                 || clipType.MinimalPattern == null || clipType.MinimalPattern.Length == 0)
@@ -85,8 +94,14 @@ namespace CheatMode
                 return;
             }
 
+            int rounds = clipType.Capacity;
+            if (keepChamberedRound && feed.AmmoTypeInBreech != null)
+            {
+                rounds = Math.Max(0, rounds - 1);
+            }
+
             loadedClip.Clear();
-            for (int i = 0; i < clipType.Capacity; i++)
+            for (int i = 0; i < rounds; i++)
             {
                 int num = i % clipType.MinimalPattern.Length;
                 loadedClip.Enqueue(clipType.MinimalPattern[num].AmmoType);
@@ -121,6 +136,8 @@ namespace CheatMode
             // The volley-compression behavior is BUILT-IN and not exposed as a setting: it is enabled automatically only for "instant arrival" and only on the player's side.
             ArtilleryTimeToTarget = _prefs.CreateEntry("ArtilleryTimeToTarget", 1f, "Artillery arrival time as a fraction of vanilla: 1.0 = vanilla, 0.5 = half, 0.1 = 10%, -1.0 (or any <=0) = instant");
             ArtilleryAccuracy = _prefs.CreateEntry("ArtilleryAccuracy", 1f, "Artillery dispersion as a fraction of vanilla: 1.0 = vanilla spread, smaller = tighter, 0.1 = 10% spread, -1.0 (or any <=0) = all rounds on one point");
+            CasAccuracy = _prefs.CreateEntry("CasAccuracy", 1f, "CAS launch dispersion as a fraction of vanilla: 1.0 = vanilla spread, smaller = tighter, 0.1 = 10% spread, -1.0 (or any <=0) = zero spread (aims exactly along the aim line)");
+            CasSpreadTargets = _prefs.CreateEntry("CasSpreadTargets", true, "CAS planes pick different targets instead of all locking the same one (true = spread targets)");
 
             ESPEnabled = _prefs.CreateEntry("ESP", true, "ESP on/off (F8 toggles)");
 
@@ -315,6 +332,38 @@ namespace CheatMode
                 }
                 return value;
             }
+        }
+
+        /// <summary>
+        /// CAS launch-dispersion scale (CasAccuracy).
+        /// 1.0 = the weapon's natural spread, values between 0 and 1 tighten it proportionally and
+        /// &lt;=0 (including -1.0) means zero spread, i.e. the rounds follow the aim line exactly.
+        /// </summary>
+        internal static float CasAccuracyScale
+        {
+            get
+            {
+                if (CasAccuracy == null)
+                {
+                    return 1f;
+                }
+                float value = CasAccuracy.Value;
+                if (value >= 1f)
+                {
+                    return 1f; // Vanilla.
+                }
+                if (value <= 0f)
+                {
+                    return 0f; // Zero spread.
+                }
+                return value;
+            }
+        }
+
+        /// <summary>True when CAS planes should be spread across different targets instead of all picking the same one.</summary>
+        internal static bool CasSpreadTargetsEnabled
+        {
+            get { return CasSpreadTargets != null && CasSpreadTargets.Value; }
         }
 
         /// <summary>

@@ -71,7 +71,10 @@ namespace CheatMode
                 return true;
             }
 
-            CheatModeMod.RefillVehicleLoadedClip(__instance, queuedClipType);
+            // keepChamberedRound: an ammunition-type switch / manual reload can leave the old type's
+            // round in the breech, so fill only Capacity - 1 into the queue and keep "clip + breech"
+            // equal to exactly one full clip (otherwise the switch would add an extra round).
+            CheatModeMod.RefillVehicleLoadedClip(__instance, queuedClipType, true);
 
             // When the manual-reload command / fallback reload path is triggered, the breech may be empty;
             // if auto-feeding is on, immediately start the round-feeding loop so the turret does not sit
@@ -82,6 +85,72 @@ namespace CheatMode
             }
 
             return false; // Skip the vanilla FeedNewClip and never enter the Reloading state.
+        }
+    }
+
+    /// <summary>
+    /// Ammunition-type switching while "no reload" is on, applied after AmmoFeed.SetNextClipType.
+    ///
+    /// Vanilla only stores the new type in QueuedClipType and then lets ResumeClipLoadIfEmpty()
+    /// decide whether to load it - and that method only calls FeedNewClip() when the clip is empty.
+    /// Because "no reload" keeps the player's clip permanently full, the new type never got loaded,
+    /// so ammunition could not be switched while the cheat was enabled.
+    ///
+    /// This postfix issues one FeedNewClip() after a real type change: it is caught by
+    /// NoReloadFeedNewClipPatch, which swaps the loaded clip to QueuedClipType immediately (no
+    /// reload flow, no reload animation), and it also performs the exclusive-item toggle that
+    /// vanilla would have done in FinishClipReload for weapons with
+    /// ExclusivesChangeBeforeReload == false. Only the player's currently controlled vehicle is
+    /// affected; an unchanged type, an in-progress reload or a disabled cheat keeps vanilla behavior.
+    /// </summary>
+    [HarmonyPatch(typeof(GHPC.Weapons.AmmoFeed), "SetNextClipType")]
+    public static class NoReloadAmmoSwitchPatch
+    {
+        private static readonly System.Reflection.MethodInfo ToggleExclusiveItemsMethod =
+            AccessTools.Method(typeof(GHPC.Weapons.AmmoFeed), "ToggleExclusiveItems");
+
+        private static void Postfix(GHPC.Weapons.AmmoFeed __instance)
+        {
+            if (__instance == null)
+            {
+                return;
+            }
+            if (!CheatModeMod.NoReloadEnabled || !CheatModeMod.Managed(__instance)
+                || !CheatModeMod.IsPlayerVehicleComponent(__instance))
+            {
+                return;
+            }
+            if (__instance.Reloading)
+            {
+                return; // Already reloading: let the vanilla flow finish.
+            }
+
+            AmmoType.AmmoClip queued = __instance.QueuedClipType;
+            if (queued == null)
+            {
+                return;
+            }
+            if (__instance.LoadedClipType != null && __instance.LoadedClipType.Equals(queued))
+            {
+                return; // Same type, or the FeedNewClip patch already swapped it.
+            }
+
+            // Trigger one clip swap: NoReloadFeedNewClipPatch turns it into "load QueuedClipType now".
+            __instance.FeedNewClip();
+
+            // Weapons with ExclusivesChangeBeforeReload == false toggle their exclusive items inside
+            // FinishClipReload, which is skipped here because no real reload happens; do it manually.
+            if (!__instance.ExclusivesChangeBeforeReload && ToggleExclusiveItemsMethod != null)
+            {
+                try
+                {
+                    ToggleExclusiveItemsMethod.Invoke(__instance, new object[] { queued });
+                }
+                catch (Exception ex)
+                {
+                    MelonLoader.MelonLogger.Error("[CheatMode] failed to toggle exclusive ammo items: " + ex.Message);
+                }
+            }
         }
     }
 

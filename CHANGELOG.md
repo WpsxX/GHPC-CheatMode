@@ -2,6 +2,16 @@
 
 All notable changes to the **CheatMode** all-in-one mod.
 
+## [1.6.2] — 2026-09-09
+
+### Added
+- **`CasAccuracy`** — CAS launch dispersion as a fraction of the weapon's natural spread: `1.0` = natural, `0.5` = half, `0.1` = 10%, `-1.0` (or any `<= 0`) = zero spread (rounds follow the aim line exactly). `CasAccuracyPatch` scales `CASHardpoint._launchDeviation` for the duration of one `Fire()` call and restores it afterwards, so no prefab is touched and nothing accumulates. Applies to every CAS attack type (bombs, rockets, guns).
+- **`CasSpreadTargets`** — a batch of CAS planes no longer all lock the same target. Vanilla lets every plane independently pick the "best score + closest to the called position" target, so sorties called together converge on one vehicle. After `CASController.SearchForTarget` has chosen `FinalTarget`, a plane whose target is already claimed by another live plane is re-routed to the nearest unclaimed enemy — first from its own spotted list (visibility and attackability already filtered by vanilla), then from every live enemy within 3 km of the called position that it actually has a weapon for. `EnterState(TurnTowardTarget)` is re-run so weapon choice and release distance follow the new target, and every decision is logged (`[CheatMode] CAS spread: ...`). Only changes anything when several enemies are in reach.
+
+### Fixed
+- **Ammunition-type switching while "No Reload" is enabled** — previously documented as a limitation, now fixed. Vanilla only stores the new type in `QueuedClipType` and loads it from `ResumeClipLoadIfEmpty()`, which calls `FeedNewClip()` only when the clip is empty; because "no reload" keeps the player's clip permanently full, a switch never took effect. `NoReloadAmmoSwitchPatch` (postfix on `AmmoFeed.SetNextClipType`) now issues one `FeedNewClip()` after a real type change: the no-reload patch turns that into an immediate clip swap (no reload flow, no reload animation) and the patch also performs the exclusive-item toggle vanilla would have done in `FinishClipReload`. Only the player's currently controlled vehicle is affected; an unchanged type, an in-progress reload or a disabled cheat keeps vanilla behavior.
+- **One extra round was added when switching ammunition types.** `RefillVehicleLoadedClip` now takes `keepChamberedRound`: when a round is already in the breech (the old type, kept across a switch), the queue is filled to `Capacity - 1` so "clip + breech" equals exactly one full clip instead of `Capacity + 1`. The pre-fire refill still fills the whole clip, because that chambered round is about to be fired.
+
 ## [1.6.1] — 2026-09-08
 
 ### Fixed
@@ -11,7 +21,7 @@ All notable changes to the **CheatMode** all-in-one mod.
 Initial public/release snapshot derived from the `CheatMode` integration project. This release:
 
 - **Documentation** — Translated every code comment into clean English and prepared a GitHub-ready project (README in EN & zh-CN, comparison report, usage tutorials, AGPL-3.0 license).
-- **Clarified a "No Reload" limitation** — while `NoReload` is enabled the player cannot switch ammunition types (the current clip is refilled and reload/type-switch is skipped). Clearly marked in the in-game on-screen hint and in both usage guides / READMEs: press **F9** to disable → switch ammo → re-enable if desired.
+- **Clarified a "No Reload" limitation** — while `NoReload` is enabled the player cannot switch ammunition types (the current clip is refilled and reload/type-switch is skipped). Clearly marked in the in-game on-screen hint and in both usage guides / READMEs: press **F9** to disable → switch ammo → re-enable if desired. *(Fixed in 1.6.2: ammunition switching now works while "No Reload" is on.)*
 - **Feature set (v1.6.0)** — the integrated mod exposes the full surface below:
 
 ### Invincibility

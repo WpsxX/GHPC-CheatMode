@@ -65,11 +65,8 @@ CheatMode is split into five blocks; each can be toggled independently.
 - Press **`F9`** in-game to toggle; while on, the top-left shows `CheatMode No Reload Enabled`.
 - It only manages weapons that belong to your vehicle and that have at least one infinite-ammo toggle active.
 
-> ⚠️ **Important limitation — switching ammunition types**: while **"No Reload" is enabled, you cannot switch ammunition types**. Because the feature refills the clip of the *current* ammunition type before every shot and skips the reload flow (ammo-type switching normally happens during a reload), a type switch will simply not take effect while it is on.
-> **Correct workflow**:
-> 1. Press **`F9`** to **turn "No Reload" off** first;
-> 2. Switch to your desired ammunition type during the reload flow;
-> 3. If you still want sustained fire afterward, press **`F9`** again to re-enable "No Reload".
+> ✅ **Ammunition switching now works while "No Reload" is on (fixed in 1.6.2)**: selecting another type swaps the clip **immediately** (no reload flow, no animation), and "clip + breech" stays exactly one full clip — no extra round is added. The round already in the breech keeps its old type until it is fired.
+> (Before 1.6.2 the workflow was: press **`F9`** to disable → switch ammo → press **`F9`** to re-enable.)
 
 ### 4. Fire Support / Artillery
 | Setting | Default | Effect |
@@ -79,6 +76,8 @@ CheatMode is split into five blocks; each can be toggled independently.
 | `ArtilleryVolleyRounds` | -1 | Rounds per volley; `-1` = vanilla; otherwise a fixed 1–128. |
 | `ArtilleryTimeToTarget` | 1.0 | Arrival-time ratio; `-1.0`/`<=0` = instant. |
 | `ArtilleryAccuracy` | 1.0 | Dispersion ratio; smaller = more accurate; `<=0` = all rounds on one point. |
+| `CasAccuracy` | 1.0 | CAS launch dispersion ratio of the weapon's natural spread; smaller = tighter; `<=0` = zero spread (rounds follow the aim line). All CAS attack types. |
+| `CasSpreadTargets` | true | CAS planes pick different targets instead of all locking the same one. |
 
 - These fire-support parameters apply **only to batteries/airframes on the player's faction**; enemy batteries and **script-planned story strikes always stay vanilla**, so campaign scripts are never disturbed.
 - **Faction-aware artillery damage (built-in, cannot be disabled)**: your faction's artillery fires live (damaging) rounds; the enemy's fires blanks (no damage). To disable, you must edit `ArtilleryFactionAwareEnabled` in `CheatMode.cs` and recompile.
@@ -103,7 +102,7 @@ CheatMode is split into five blocks; each can be toggled independently.
 3. **Config changes take effect on restart** (or via the MelonLoader preferences panel; most apply immediately, and artillery parameters apply on the next call).
 4. **Changing built-in behavior requires recompiling** (e.g. `ArtilleryFactionAwareEnabled`, volley compression have no settings).
 5. **`NoReload` only affects your vehicle.** Don't expect friendly AI to skip reloading.
-6. **Turn "No Reload" off before switching ammunition types.** You cannot switch ammo while it is enabled: press **`F9`** to disable → switch ammo → press **`F9`** to re-enable if needed (see section 3 above).
+6. **Ammunition switching is instant while "No Reload" is on** (since 1.6.2): select the type and the clip is swapped immediately, with no extra round. The chambered round keeps its old type until fired.
 7. **Friendly detection uses an authoritative faction cascade.** In custom scenes (e.g. Fulda 1989), if you see "0 units granted", check the log line `[CheatMode] Scene scan finished: ... side=... (via ...)`, which shows the faction source (`SceneController` / `MissionData` / `PlayerUnit`) to help diagnose.
 8. **AAR / replay**: instant artillery volleys are deliberately handed back to the vanilla per-round flow during AAR replay to avoid desync.
 9. **Compatibility**: written against a specific GHPC build using the publicized assembly and private/internal fields via `AccessTools` reflection. A major game update may break it until adapted.

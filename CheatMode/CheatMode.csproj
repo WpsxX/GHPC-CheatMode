@@ -70,6 +70,7 @@
     <Compile Include="CheatMode.cs" />
     <Compile Include="CheatAmmoPatches.cs" />
     <Compile Include="CheatFireSupportPatches.cs" />
+    <Compile Include="CheatCASPatches.cs" />
     <Compile Include="CheatInvinciblePatches.cs" />
     <Compile Include="CheatESPPatches.cs" />
     <Compile Include="Render.cs" />

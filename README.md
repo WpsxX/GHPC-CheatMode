@@ -126,7 +126,7 @@ CheatMode is split into five blocks; each can be toggled independently.
 - While on, the top-left shows `CheatMode No Reload Enabled`.
 - It only manages weapons that belong to your vehicle and that have at least one infinite-ammo toggle active.
 
-> ⚠️ **Important limitation — switching ammunition types:** While "No Reload" is enabled, **you cannot switch ammunition types** — the feature refills the clip of the *current* type before every shot and skips the reload flow (ammo-type switching normally happens during a reload), so a switch simply will not take effect. Correct workflow: ① press **`F9`** to turn it **off**; ② switch to your desired ammunition type during the reload flow; ③ if you still want sustained fire afterward, press **`F9`** again to re-enable it.
+> ✅ **Ammunition switching works while "No Reload" is on (fixed in 1.6.2):** selecting another type now swaps the clip **immediately** — `NoReloadAmmoSwitchPatch` issues one `FeedNewClip()` after a real type change, which the no-reload patch turns into an instant clip swap (no reload flow, no reload animation), and it keeps "clip + breech" equal to exactly one full clip (no extra round). Only the *current* clip changes; the round already in the breech keeps its old type until it is fired. (Before 1.6.2 you had to press **`F9`** off → switch → on again.)
 
 ### 4.4 Fire Support / Artillery
 
@@ -137,6 +137,8 @@ CheatMode is split into five blocks; each can be toggled independently.
 | `ArtilleryVolleyRounds` | `-1` | Rounds per volley: `-1` = the battery's vanilla count; otherwise a fixed 1–128. Player faction only. |
 | `ArtilleryTimeToTarget` | `1.0` | Arrival time as a fraction of vanilla: `1.0` = vanilla; `0.5` = half; `0.1` = 10%; `-1.0` or any `<=0` = **instant** (see notes; player faction, on-call calls only). |
 | `ArtilleryAccuracy` | `1.0` | Dispersion as a fraction of vanilla: `1.0` = vanilla spread; smaller = tighter; `0.1` = 10%; `-1.0` or `<=0` = zero dispersion (all rounds on one point). Player faction only. |
+| `CasAccuracy` | `1.0` | CAS launch dispersion as a fraction of the weapon's natural spread: `1.0` = natural; smaller = tighter; `0.1` = 10%; `-1.0` or `<=0` = zero spread (rounds follow the aim line exactly). Applies to every CAS attack type. |
+| `CasSpreadTargets` | `true` | A batch of CAS planes picks **different targets** instead of all locking the same one (only changes anything when several enemies are within reach; the nearest unclaimed target within 3 km of the called position is used). |
 
 - These fire-support parameters apply **only to batteries/airframes on the player's faction**; enemy batteries and **script-planned story strikes always stay vanilla**, so campaign scripts are never disturbed.
 
@@ -174,7 +176,7 @@ For a strike, total arrival time = **first-round delay** + **spread time** (`(ro
 3. **Config changes take effect on restart** (or via the MelonLoader preferences panel; most apply immediately, and artillery parameters apply on the next call).
 4. **Changing built-in behavior requires recompiling** (e.g. `ArtilleryFactionAwareEnabled`, volley compression have no settings).
 5. **`NoReload` only affects your vehicle.** Don't expect friendly AI to skip reloading.
-6. **Turn "No Reload" off before switching ammunition types:** press **`F9`** to disable → switch ammo → press **`F9`** to re-enable if needed (see section 4.3).
+6. **Ammunition switching is instant while "No Reload" is on** (since 1.6.2): just select the type — the clip is swapped immediately and no extra round is added. The round already in the breech keeps its old type until it is fired.
 7. **Friendly detection uses an authoritative faction cascade.** In custom scenes (e.g. Fulda 1989), if you see "0 units granted", check the log line `[CheatMode] Scene scan finished: ... side=... (via ...)`, which shows the faction source (`SceneController` / `MissionData` / `PlayerUnit`) to help diagnose.
 8. **AAR / replay:** instant artillery volleys are deliberately handed back to the vanilla per-round flow during AAR replay to avoid desync.
 9. **Compatibility:** written against a specific GHPC build using the publicized assembly and private/internal fields via `AccessTools` reflection. A major game update may break it until adapted.
