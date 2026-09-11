@@ -2,6 +2,15 @@
 
 All notable changes to the **CheatMode** all-in-one mod.
 
+## [1.6.3] — 2026-09-12
+
+### Removed
+- **The whole fire-support / artillery subsystem.** `CheatFireSupportPatches.cs` and `CheatCASPatches.cs` are gone, together with the seven settings that drove them (`InfiniteFireSupport`, `FireSupportNoCooldown`, `ArtilleryVolleyRounds`, `ArtilleryTimeToTarget`, `ArtilleryAccuracy`, `CasAccuracy`, `CasSpreadTargets`), the two always-on built-in behaviors (faction-aware artillery damage and volley compression) and the `ResolvePlayerFaction()` helper only they used. CheatMode no longer patches `ArtilleryBattery`, `FireMissionManager`, `CasSupportManager`, `CASController` or `CASHardpoint` at all, so it can no longer fight another artillery/CAS mod over the same objects - **use a dedicated fire-support mod for those features.**
+- The `[GHPC_Artillery_Rework]` attribution and the artillery section of the upstream comparison were dropped with the subsystem.
+
+### Notes
+- Invincibility, infinite ammo / no-reload and ESP are untouched. Existing configs keep working: the removed keys are simply ignored, and a fresh `MelonPreferences.cfg` no longer writes them.
+
 ## [1.6.2] — 2026-09-09
 
 ### Added

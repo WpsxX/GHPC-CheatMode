@@ -1,6 +1,6 @@
 # CheatMode Usage Guide (English)
 
-> Applies to `CheatMode.dll` v1.6.0. Covers **installation, feature reference, and usage notes**.
+> Applies to `CheatMode.dll` v1.6.3. Covers **installation, feature reference, and usage notes**.
 
 ---
 
@@ -20,7 +20,7 @@
    ```
    If `Bin\Mods\` does not exist, create it (or let MelonLoader create it on first run).
 2. Copy the compiled **`CheatMode.dll`** into **`<game>\Bin\Mods\`**.
-3. **(Important)** If `Mods` still contains the standalone **`InfiniteAmmo.dll`**, **`Invincible_Tank.dll`**, **`GHPCESP.dll`** (or any older artillery DLL), **remove or disable them**. CheatMode already covers these features; having both causes duplicate Harmony patches and duplicate scene scans.
+3. **(Important)** If `Mods` still contains the standalone **`InfiniteAmmo.dll`**, **`Invincible_Tank.dll`**, **`GHPCESP.dll`**, **remove or disable them**. CheatMode already covers these features; having both causes duplicate Harmony patches and duplicate scene scans.
 4. Launch the game. On the first run the `[CheatMode]` section is created in `UserData\MelonPreferences.cfg`.
 5. To change defaults, exit the game and edit that file with a text editor, or use the in-game MelonLoader preferences panel.
 
@@ -68,23 +68,7 @@ CheatMode is split into five blocks; each can be toggled independently.
 > ✅ **Ammunition switching now works while "No Reload" is on (fixed in 1.6.2)**: selecting another type swaps the clip **immediately** (no reload flow, no animation), and "clip + breech" stays exactly one full clip — no extra round is added. The round already in the breech keeps its old type until it is fired.
 > (Before 1.6.2 the workflow was: press **`F9`** to disable → switch ammo → press **`F9`** to re-enable.)
 
-### 4. Fire Support / Artillery
-| Setting | Default | Effect |
-|---|---|---|
-| `InfiniteFireSupport` | true | Player-side artillery / CAS **calls never run out**. |
-| `FireSupportNoCooldown` | true | Player-side artillery / CAS **have no cooldown** — call again immediately. |
-| `ArtilleryVolleyRounds` | -1 | Rounds per volley; `-1` = vanilla; otherwise a fixed 1–128. |
-| `ArtilleryTimeToTarget` | 1.0 | Arrival-time ratio; `-1.0`/`<=0` = instant. |
-| `ArtilleryAccuracy` | 1.0 | Dispersion ratio; smaller = more accurate; `<=0` = all rounds on one point. |
-| `CasAccuracy` | 1.0 | CAS launch dispersion ratio of the weapon's natural spread; smaller = tighter; `<=0` = zero spread (rounds follow the aim line). All CAS attack types. |
-| `CasSpreadTargets` | true | CAS planes pick different targets instead of all locking the same one. |
-
-- These fire-support parameters apply **only to batteries/airframes on the player's faction**; enemy batteries and **script-planned story strikes always stay vanilla**, so campaign scripts are never disturbed.
-- **Faction-aware artillery damage (built-in, cannot be disabled)**: your faction's artillery fires live (damaging) rounds; the enemy's fires blanks (no damage). To disable, you must edit `ArtilleryFactionAwareEnabled` in `CheatMode.cs` and recompile.
-- **Volley compression (built-in)**: when `ArtilleryTimeToTarget <= 0` ("instant"), the whole volley is fired on the same frame (a true single-volley strike) and the panel countdown is zeroed.
-- Note: as soon as `ArtilleryTimeToTarget < 1`, the first-round delay is removed (the first round drops immediately); the setting only controls the interval between rounds. Example (2S3, vanilla 30 s first delay, 12 rounds, 3 s interval): `0.5` → no first delay, 1.5 s interval, ~16.5 s to finish; `-1.0` → all 12 rounds drop on the same frame.
-
-### 5. ESP
+### 4. ESP
 | Setting | Default | Effect |
 |---|---|---|
 | `ESP` | true | Master ESP switch. |
@@ -98,15 +82,14 @@ CheatMode is split into five blocks; each can be toggled independently.
 ## 3. Usage Notes
 
 1. **This is a cheat.** Use it for single-player / private testing. In some multiplayer/anti-cheat contexts this may violate rules — at your own risk.
-2. **Do not run it alongside the four standalone mods.** Remove `InfiniteAmmo.dll`, `Invincible_Tank.dll`, `GHPCESP.dll`, and any older artillery DLL to avoid duplicate patches/scans.
-3. **Config changes take effect on restart** (or via the MelonLoader preferences panel; most apply immediately, and artillery parameters apply on the next call).
-4. **Changing built-in behavior requires recompiling** (e.g. `ArtilleryFactionAwareEnabled`, volley compression have no settings).
+2. **Do not run it alongside the three standalone mods.** Remove `InfiniteAmmo.dll`, `Invincible_Tank.dll` and `GHPCESP.dll` to avoid duplicate patches/scans.
+3. **Config changes take effect on restart** (or via the MelonLoader preferences panel; most apply immediately).
+4. **Changing built-in behavior requires recompiling** (built-in behaviors have no settings entries).
 5. **`NoReload` only affects your vehicle.** Don't expect friendly AI to skip reloading.
 6. **Ammunition switching is instant while "No Reload" is on** (since 1.6.2): select the type and the clip is swapped immediately, with no extra round. The chambered round keeps its old type until fired.
 7. **Friendly detection uses an authoritative faction cascade.** In custom scenes (e.g. Fulda 1989), if you see "0 units granted", check the log line `[CheatMode] Scene scan finished: ... side=... (via ...)`, which shows the faction source (`SceneController` / `MissionData` / `PlayerUnit`) to help diagnose.
-8. **AAR / replay**: instant artillery volleys are deliberately handed back to the vanilla per-round flow during AAR replay to avoid desync.
-9. **Compatibility**: written against a specific GHPC build using the publicized assembly and private/internal fields via `AccessTools` reflection. A major game update may break it until adapted.
-10. **Backup**: before updating the game, back up `UserData\MelonPreferences.cfg` so you can restore your settings.
+8. **Compatibility**: written against a specific GHPC build using the publicized assembly and private/internal fields via `AccessTools` reflection. A major game update may break it until adapted.
+9. **Backup**: before updating the game, back up `UserData\MelonPreferences.cfg` so you can restore your settings.
 
 ---
 
@@ -114,4 +97,3 @@ CheatMode is split into five blocks; each can be toggled independently.
 - **Not loading / no `[CheatMode] Loaded` in log** → verify the DLL is in `Bin\Mods\`, MelonLoader version, and game path references.
 - **Startup error "Another instance of CheatMode is already loaded"** → two copies are in `Mods`; delete the extra.
 - **ESP invisible** → press F8 to confirm it is on; ensure the target is in view and is not the unit you are in.
-- **Enemy artillery still fires** → that is expected. Faction-aware damage only makes the enemy fire *blanks*; if you see enemy shells with actual effect, that battery is a temporary scripted strike (by design it stays vanilla).

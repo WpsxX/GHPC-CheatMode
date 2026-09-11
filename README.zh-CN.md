@@ -9,9 +9,22 @@
 
 </div>
 
-一个整合版 [Gunner, HEAT, PC!](https://store.steampowered.com/app/1705180/Gunner_HEAT_PC/) MelonLoader 作弊模组：把 **无敌、无限弹药 / 无需装填、无限与秒达火力支援、ESP** 合并进 **一个 DLL**，并加入 **「玩家 / 友军」粒度控制** 与 **火炮阵营识别伤害**，同时刻意让**敌方单位与脚本剧情保持原版行为**。
+> ## ⚠️ 火力支援功能已移除（v1.6.3）
+>
+> **v1.6.3 删除了整个火力支援 / 火炮子系统。** 无限呼叫、无冷却、抵达时间、单次发数、火炮散布精度、CAS
+> 精度与 CAS 目标分散**都不再属于 CheatMode**，「火炮阵营识别伤害」与「齐射压缩」两项内置行为也一并移除。
+> 下列设置项已删除，旧配置文件里的这些键会被直接忽略：
+> `InfiniteFireSupport`、`FireSupportNoCooldown`、`ArtilleryVolleyRounds`、`ArtilleryTimeToTarget`、
+> `ArtilleryAccuracy`、`CasAccuracy`、`CasSpreadTargets`。
+>
+> CheatMode 现在完全不再 patch `ArtilleryBattery`、`FireMissionManager`、`CasSupportManager`、`CASController`
+> 与 `CASHardpoint`，因此不会再与别的火炮 / CAS mod 争抢同一批对象。**这些功能请使用专门的火力支援 mod。**
+>
+> **无敌、无限弹药 / 无需装填、ESP 不受影响。**
 
-本项目整合并加固了四个社区 mod 的思路：[GHPC_Artillery_Rework](https://github.com/QwertyRyo/GHPC_Artillery_Rework) · [InfiniteAmmo](https://github.com/Bluehawk8908/InfiniteAmmo) · [Invincible-Tank](https://github.com/QwertyRyo/Invincible-Tank) · [GHPCESP](https://github.com/k4yt3x/GHPCESP)。详细对比见 [COMPARISON.md](docs/COMPARISON.md)。
+一个整合版 [Gunner, HEAT, PC!](https://store.steampowered.com/app/1705180/Gunner_HEAT_PC/) MelonLoader 作弊模组：把 **无敌、无限弹药 / 无需装填、ESP** 合并进 **一个 DLL**，并加入 **「玩家 / 友军」粒度控制**，同时刻意让**敌方单位与脚本剧情保持原版行为**。
+
+本项目整合并加固了三个社区 mod 的思路：[InfiniteAmmo](https://github.com/Bluehawk8908/InfiniteAmmo) · [Invincible-Tank](https://github.com/QwertyRyo/Invincible-Tank) · [GHPCESP](https://github.com/k4yt3x/GHPCESP)。详细对比见 [COMPARISON.md](docs/COMPARISON.md)。
 
 > ⚠️ **作弊模组**：仅供单人 / 私人测试使用，请勿用于竞技类多人。
 
@@ -35,8 +48,6 @@
 - **无敌** —— 可分别保护**玩家自身单位**与**友军 AI 单位**。
 - **无限弹药** —— 玩家与/或友军的载具、步兵、投掷武器、架设武器阵地。
 - **无需装填**（仅玩家载具）—— 弹夹永不打空，游戏内按 **F9** 开关。
-- **火力支援** —— 玩家阵营火炮 / CAS 呼叫次数**无限**、**无冷却**，并可调**每轮发数 / 抵达时间 / 精度**。
-- **火炮阵营识别伤害** —— 己方火炮打实弹（有伤害），敌方火炮打空炮（无伤害）。
 - **ESP** —— **F8** 同时开关载具 / 反坦克导弹 / 步兵透视，标签显示距离。
 
 以上每一项都可在 `MelonPreferences.cfg` 中独立开关。
@@ -45,7 +56,7 @@
 
 ## 2. 安装
 
-> 适用于 `CheatMode.dll` v1.6.0。
+> 适用于 `CheatMode.dll` v1.6.3。
 
 ### 前置条件
 
@@ -66,7 +77,7 @@
    ```
    若 `Bin\Mods\` 不存在，可自行创建，或首次运行 MelonLoader 后自动生成。
 2. 把编译好的 **`CheatMode.dll`** 复制到 **`<游戏目录>\Bin\Mods\`**。
-3. **（重要）** 若 `Mods` 目录里还有旧的独立 **`InfiniteAmmo.dll`、`Invincible_Tank.dll`、`GHPCESP.dll`**（或任何旧火炮 dll），请**删除或移到别处禁用**。CheatMode 已整合这些功能，重复加载会造成重复的 Harmony 补丁与场景扫描，可能冲突。
+3. **（重要）** 若 `Mods` 目录里还有旧的独立 **`InfiniteAmmo.dll`、`Invincible_Tank.dll`、`GHPCESP.dll`**，请**删除或移到别处禁用**。CheatMode 已整合这些功能，重复加载会造成重复的 Harmony 补丁与场景扫描，可能冲突。
 4. 启动游戏。首次运行后会在 `UserData\MelonPreferences.cfg` 生成 `[CheatMode]` 段。
 5. 如需修改默认值，退出游戏后用文本编辑器编辑该文件，或按游戏内 MelonLoader 偏好面板修改。
 
@@ -128,36 +139,7 @@ CheatMode 分五大块，每一项都能单独开关。
 
 > ✅ **「无需装填」开启时现在可以正常切换弹种（1.6.2 修复）：** 选择另一种弹种会**立即**换弹夹 —— `NoReloadAmmoSwitchPatch` 在弹种真正变化后补发一次 `FeedNewClip()`，由无需装填补丁把它变成"立刻换上 NewType"（不进换弹流程、不播装填动画），并且保证"弹夹 + 炮膛"总数恰好等于一个满弹夹（不会多出一发）。只换当前弹夹；炮膛里那一发仍保持旧弹种直到打出去。（1.6.2 之前需要先按 **F9** 关闭 → 切弹种 → 再开启。）
 
-### 4.4 火力支援 / 火炮（Fire Support / Artillery）
-
-| 设置 | 默认 | 作用 |
-|---|---|---|
-| `InfiniteFireSupport` | `true` | 玩家阵营火炮 / CAS **呼叫次数永不耗尽**（敌方与脚本规划炮击保持原版；纯配置、无快捷键、无提示） |
-| `FireSupportNoCooldown` | `true` | 玩家阵营火炮 / CAS **呼叫后无冷却**，可立刻再呼叫（纯配置） |
-| `ArtilleryVolleyRounds` | `-1` | 一轮发数：`-1` = 用阵地自带原版发数；否则固定 1~128 发。仅玩家阵营 |
-| `ArtilleryTimeToTarget` | `1.0` | 抵达时间比例：`1.0` = 原版；`0.5` = 一半；`0.1` = 10%；`-1.0` 或任意 `<=0` = **秒抵达**（见下文说明；仅玩家阵营、仅即时呼叫） |
-| `ArtilleryAccuracy` | `1.0` | 散布比例：`1.0` = 原版；越小越准；`0.1` = 10%；`-1.0` 或 `<=0` = 零散布（全落同一点）。仅玩家阵营 |
-| `CasAccuracy` | `1.0` | CAS 发射散布比例：`1.0` = 武器自然散布；越小越准；`0.1` = 10%；`-1.0` 或 `<=0` = 零散布（严格沿瞄准线）。对所有 CAS 攻击方式生效 |
-| `CasSpreadTargets` | `true` | 同一批 CAS 飞机**分散打不同目标**，不再全部锁定同一个（附近有多个敌人时才起作用；取呼叫点 3km 内最近的未被占用目标） |
-
-- 上述火力相关参数**只对「玩家阵营」的阵地/支援机生效**；敌方阵营阵地与**剧情脚本规划炮击一律保持原版**，不会干扰战役脚本。
-
-**内置固定行为（不可配置）：**
-
-- **火炮阵营识别伤害** —— 己方火炮打实弹（有伤害），敌方火炮打空炮（无伤害）。要关闭只能改 `CheatMode.cs` 里的 `ArtilleryFactionAwareEnabled` 常量后重新编译。
-- **齐射压缩** —— 当 `ArtilleryTimeToTarget <= 0`（「秒抵达」）时，呼叫成功的同一帧把整轮一次打完（真正一轮齐落），面板倒计时归零。
-
-**`ArtilleryTimeToTarget` 说明**
-
-一次炮击总抵达时间 = **首发延迟** + **铺开时间**（`(发数-1) × 每发间隔`）+ **炮弹飞行时间**。
-
-- 只要 `< 1`，首发延迟一律取消（第一发立刻开始落下）；该参数只控制「每发之间的间隔」。
-- 例（2S3：原版首发 30s、12 发、间隔 3s）：
-  - `0.5` → 无首发延迟、间隔 1.5s，整轮约 16.5s 落完；
-  - `0.1` → 间隔 0.3s；
-  - `-1.0` → 12 发同一帧全部落下。
-
-### 4.5 ESP
+### 4.4 ESP
 
 | 设置 | 默认 | 作用 |
 |---|---|---|
@@ -172,15 +154,14 @@ CheatMode 分五大块，每一项都能单独开关。
 ## 5. 使用注意事项
 
 1. **属于作弊，请用于单人 / 私人测试。** 个别多人/反作弊环境使用可能违反规则，风险自负。
-2. **不要与四个独立 mod 同装。** 务必移除 `InfiniteAmmo.dll`、`Invincible_Tank.dll`、`GHPCESP.dll` 及任何旧火炮 dll，否则可能重复补丁/重复扫描。
-3. **修改配置需重启生效**（或通过 MelonLoader 偏好面板，多数即时生效；火炮参数在下一次呼叫时生效）。
-4. **改动源码内置行为需自行编译**：`ArtilleryFactionAwareEnabled`、齐射压缩等是硬编码的，无设置项。
+2. **不要与三个独立 mod 同装。** 务必移除 `InfiniteAmmo.dll`、`Invincible_Tank.dll`、`GHPCESP.dll`，否则可能重复补丁/重复扫描。
+3. **修改配置需重启生效**（或通过 MelonLoader 偏好面板，多数即时生效）。
+4. **改动源码内置行为需自行编译**：内置行为是硬编码的，无设置项。
 5. **`NoReload` 只作用于玩家载具**：不要期望友军 AI 免装填。
 6. **「无需装填」开启时可直接切换弹种**（1.6.2 起）：选弹种即立刻换弹夹，且不会多出一发；炮膛里那一发保持旧弹种直到打出去。
 7. **友军判定采用「权威阵营级联」。** 自定义场景（如 Fulda 1989）若出现「0 单位被授予」，请查看日志 `[CheatMode] Scene scan finished: ... side=... (via ...)` 一行，其中 `SceneController` / `MissionData` / `PlayerUnit` 表明阵营来源，便于定位。
-8. **AAR / 回放**：即时齐射（秒抵达）在 AAR 回放中被显式放回原版逐发流程，避免回放异常。
-9. **兼容性**：面向特定 GHPC 版本编写，使用 publicized 程序集，依赖私有时/后字段（经反射 `AccessTools`）。游戏大版本更新后可能失效，需等待适配。
-10. **备份**：更新游戏前建议备份 `UserData\MelonPreferences.cfg`，以便回退设置。
+8. **兼容性**：面向特定 GHPC 版本编写，使用 publicized 程序集，依赖私有时/后字段（经反射 `AccessTools`）。游戏大版本更新后可能失效，需等待适配。
+9. **备份**：更新游戏前建议备份 `UserData\MelonPreferences.cfg`，以便回退设置。
 
 ---
 
@@ -189,7 +170,6 @@ CheatMode 分五大块，每一项都能单独开关。
 - **没加载 / 日志没出现 `[CheatMode] Loaded`** → 确认 dll 在 `Bin\Mods\`、MelonLoader 版本、游戏路径引用正确。
 - **启动报 "Another instance of CheatMode is already loaded"** → Mods 里放了两份，删掉多余。
 - **ESP 看不见** → 按 F8 确认已开启；确认目标在视野内且不在你当前单位身上。
-- **敌方火炮仍在开火** → 那是正常的（阵营伤害只让敌方「打空炮」；若你看到敌方仍有弹，说明该炮为临时脚本炮击，属设计如此）。
 
 ---
 
@@ -209,7 +189,6 @@ MSBuild.exe CheatMode.sln /p:Configuration=Release
 CheatMode/
 ├── CheatMode.cs                主入口：配置、阵营级联、弹药扫描、ESP 绘制
 ├── CheatAmmoPatches.cs         无限弹药 / 无需装填补丁（载具、步兵、投掷武器、阵地）
-├── CheatFireSupportPatches.cs  火炮 / CAS 火力支援作弊
 ├── CheatInvinciblePatches.cs   无敌伤害过滤补丁
 ├── CheatESPPatches.cs          ESP 单位追踪补丁
 ├── Render.cs                   IMGUI 绘制辅助
@@ -228,8 +207,7 @@ CheatMode 整合了下列遵循相应许可证发布的社区 mod 代码，请�
 - [Invincible-Tank](https://github.com/QwertyRyo/Invincible-Tank) — AGPL-3.0（QwertyRyo）
 - [InfiniteAmmo](https://github.com/Bluehawk8908/InfiniteAmmo) — GPL-3.0（Bluehawk8908）
 - [GHPCESP](https://github.com/k4yt3x/GHPCESP) — MIT（K4YT3X）
-- [GHPC_Artillery_Rework](https://github.com/QwertyRyo/GHPC_Artillery_Rework)（QwertyRyo）— 火力支援 / 火炮子系统的灵感来源
 
 **相关文档**
 
-- CheatMode 与这四个 mod 的完整差异对比（功能、实现差异、修复与改进）：[docs/COMPARISON.md](docs/COMPARISON.md)
+- CheatMode 与这三个 mod 的完整差异对比（功能、实现差异、修复与改进）：[docs/COMPARISON.md](docs/COMPARISON.md)

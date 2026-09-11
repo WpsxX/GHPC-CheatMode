@@ -17,7 +17,7 @@ using HarmonyLib;
 using MelonLoader;
 using UnityEngine;
 
-[assembly: MelonInfo(typeof(CheatMode.CheatModeMod), "CheatMode", "1.6.2", "CheatMode")]
+[assembly: MelonInfo(typeof(CheatMode.CheatModeMod), "CheatMode", "1.6.3", "CheatMode")]
 [assembly: MelonGame("Radian Simulations LLC", "GHPC")]
 
 namespace CheatMode
@@ -47,13 +47,6 @@ namespace CheatMode
         internal static MelonPreferences_Entry<bool> SelfInfiniteAmmo;
         internal static MelonPreferences_Entry<bool> FriendlyInfiniteAmmo;
         internal static MelonPreferences_Entry<bool> NoReload;
-        internal static MelonPreferences_Entry<bool> InfiniteFireSupport;
-        internal static MelonPreferences_Entry<bool> FireSupportNoCooldown;
-        internal static MelonPreferences_Entry<int> ArtilleryVolleyRounds;
-        internal static MelonPreferences_Entry<float> ArtilleryTimeToTarget;
-        internal static MelonPreferences_Entry<float> ArtilleryAccuracy;
-        internal static MelonPreferences_Entry<float> CasAccuracy;
-        internal static MelonPreferences_Entry<bool> CasSpreadTargets;
         internal static MelonPreferences_Entry<bool> ESPEnabled;
 
         // ESP unit lists
@@ -129,15 +122,6 @@ namespace CheatMode
             SelfInfiniteAmmo = _prefs.CreateEntry("SelfInfiniteAmmo", true, "Self unit: infinite ammo");
             FriendlyInfiniteAmmo = _prefs.CreateEntry("FriendlyInfiniteAmmo", true, "Friendly AI units: infinite ammo");
             NoReload = _prefs.CreateEntry("NoReload", true, "Player vehicle: no reloading (F9 toggles; friendly AI unaffected)");
-            InfiniteFireSupport = _prefs.CreateEntry("InfiniteFireSupport", true, "Unlimited fire support missions (player side only; no hotkey, config only)");
-            FireSupportNoCooldown = _prefs.CreateEntry("FireSupportNoCooldown", true, "Fire support: no cooldown (player side only; no hotkey, config only)");
-            // The faction-aware artillery damage behavior is ALWAYS ON and is intentionally not exposed as a setting (it is not written to MelonPreferences.cfg).
-            ArtilleryVolleyRounds = _prefs.CreateEntry("ArtilleryVolleyRounds", -1, "Rounds fired per artillery volley (-1 = use the battery's vanilla round count; 1-128)");
-            // The volley-compression behavior is BUILT-IN and not exposed as a setting: it is enabled automatically only for "instant arrival" and only on the player's side.
-            ArtilleryTimeToTarget = _prefs.CreateEntry("ArtilleryTimeToTarget", 1f, "Artillery arrival time as a fraction of vanilla: 1.0 = vanilla, 0.5 = half, 0.1 = 10%, -1.0 (or any <=0) = instant");
-            ArtilleryAccuracy = _prefs.CreateEntry("ArtilleryAccuracy", 1f, "Artillery dispersion as a fraction of vanilla: 1.0 = vanilla spread, smaller = tighter, 0.1 = 10% spread, -1.0 (or any <=0) = all rounds on one point");
-            CasAccuracy = _prefs.CreateEntry("CasAccuracy", 1f, "CAS launch dispersion as a fraction of vanilla: 1.0 = vanilla spread, smaller = tighter, 0.1 = 10% spread, -1.0 (or any <=0) = zero spread (aims exactly along the aim line)");
-            CasSpreadTargets = _prefs.CreateEntry("CasSpreadTargets", true, "CAS planes pick different targets instead of all locking the same one (true = spread targets)");
 
             ESPEnabled = _prefs.CreateEntry("ESP", true, "ESP on/off (F8 toggles)");
 
@@ -241,161 +225,6 @@ namespace CheatMode
         internal static bool NoReloadEnabled
         {
             get { return NoReload != null && NoReload.Value; }
-        }
-
-        internal static bool InfiniteFireSupportEnabled
-        {
-            get { return InfiniteFireSupport != null && InfiniteFireSupport.Value; }
-        }
-
-        internal static bool FireSupportNoCooldownEnabled
-        {
-            get { return FireSupportNoCooldown != null && FireSupportNoCooldown.Value; }
-        }
-
-        /// <summary>
-        /// Faction-aware artillery damage: artillery on the player's faction fires live rounds
-        /// (which deal damage), while artillery on the enemy faction fires blanks (no damage).
-        /// This is an always-on, built-in behavior with no settings toggle -- to change it you
-        /// must edit the constant below and recompile.
-        /// </summary>
-        internal const bool ArtilleryFactionAwareEnabled = true;
-
-        /// <summary>
-        /// Number of rounds fired per volley ("rounds per volley").
-        /// -1 / &lt;=0 = use the battery's vanilla round count; otherwise the configured 1..128 value.
-        /// </summary>
-        internal static int VolleyRounds
-        {
-            get
-            {
-                if (ArtilleryVolleyRounds == null)
-                {
-                    return -1;
-                }
-                int rounds = ArtilleryVolleyRounds.Value;
-                if (rounds <= 0)
-                {
-                    return -1;
-                }
-                return Mathf.Clamp(rounds, 1, 128);
-            }
-        }
-
-        /// <summary>
-        /// Artillery arrival-time scale (ArtilleryTimeToTarget):
-        /// 1.0 = vanilla, 0.5 = half the time, 0.1 = 10% of vanilla, &lt;=0 (including -1.0) = instant arrival.
-        /// Only affects batteries on the player's faction.
-        /// </summary>
-        internal static float TimeToTargetScale
-        {
-            get
-            {
-                if (ArtilleryTimeToTarget == null)
-                {
-                    return 1f;
-                }
-                float value = ArtilleryTimeToTarget.Value;
-                if (value >= 1f)
-                {
-                    return 1f; // Vanilla (values > 1 are also treated as vanilla, for compatibility with old configs).
-                }
-                if (value <= 0f)
-                {
-                    return 0f; // Instant arrival.
-                }
-                return value;
-            }
-        }
-
-        /// <summary>
-        /// Artillery dispersion scale (ArtilleryAccuracy): the smaller the value, the more accurate.
-        /// 1.0 = vanilla spread, 0.1 = 10% of vanilla spread, &lt;=0 (including -1.0) = zero dispersion (all rounds land on one point).
-        /// Only affects batteries on the player's faction.
-        /// </summary>
-        internal static float AccuracyScale
-        {
-            get
-            {
-                if (ArtilleryAccuracy == null)
-                {
-                    return 1f;
-                }
-                float value = ArtilleryAccuracy.Value;
-                if (value >= 1f)
-                {
-                    return 1f; // Vanilla.
-                }
-                if (value <= 0f)
-                {
-                    return 0f; // Zero dispersion.
-                }
-                return value;
-            }
-        }
-
-        /// <summary>
-        /// CAS launch-dispersion scale (CasAccuracy).
-        /// 1.0 = the weapon's natural spread, values between 0 and 1 tighten it proportionally and
-        /// &lt;=0 (including -1.0) means zero spread, i.e. the rounds follow the aim line exactly.
-        /// </summary>
-        internal static float CasAccuracyScale
-        {
-            get
-            {
-                if (CasAccuracy == null)
-                {
-                    return 1f;
-                }
-                float value = CasAccuracy.Value;
-                if (value >= 1f)
-                {
-                    return 1f; // Vanilla.
-                }
-                if (value <= 0f)
-                {
-                    return 0f; // Zero spread.
-                }
-                return value;
-            }
-        }
-
-        /// <summary>True when CAS planes should be spread across different targets instead of all picking the same one.</summary>
-        internal static bool CasSpreadTargetsEnabled
-        {
-            get { return CasSpreadTargets != null && CasSpreadTargets.Value; }
-        }
-
-        /// <summary>
-        /// Resolves the faction the player currently belongs to (used by the fire-support cheats
-        /// that only affect the player's side). The authoritative cascade stays consistent with
-        /// ApplyInfiniteAmmo: scene spawning faction -&gt; mission-data PlayerFaction -&gt; the player
-        /// unit's faction; falls back to Neutral when none is available.
-        /// </summary>
-        internal static Faction ResolvePlayerFaction()
-        {
-            if (SceneController.TargetSpawningFaction != Faction.Neutral)
-            {
-                return SceneController.TargetSpawningFaction;
-            }
-
-            if (MissionStateController.Instance != null
-                && MissionStateController.Instance.MissionSceneMeta != null
-                && MissionStateController.Instance.MissionSceneMeta.DynamicMetadata != null
-                && MissionStateController.Instance.MissionSceneMeta.DynamicMetadata.MissionData != null
-                && MissionStateController.Instance.MissionSceneMeta.DynamicMetadata.MissionData.PlayerFaction != Faction.Neutral)
-            {
-                return MissionStateController.Instance.MissionSceneMeta.DynamicMetadata.MissionData.PlayerFaction;
-            }
-
-            PlayerInput playerInput = PlayerInput.Instance;
-            Unit playerUnit = (playerInput != null) ? playerInput.CurrentPlayerUnit : null;
-            if (playerUnit != null)
-            {
-                return playerUnit.Allegiance;
-            }
-
-            return Faction.Neutral;
         }
 
         internal static bool Managed(MonoBehaviour component)

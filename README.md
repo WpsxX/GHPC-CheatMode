@@ -9,9 +9,24 @@
 
 </div>
 
-An all-in-one MelonLoader cheat mod for [Gunner, HEAT, PC!](https://store.steampowered.com/app/1705180/Gunner_HEAT_PC/) that merges **invincibility, infinite ammo / no-reload, unlimited & instant fire support, and ESP** into a **single DLL**, adds **player-vs-friendly granularity** and **faction-aware artillery damage**, and is carefully scoped so enemy units and scripted campaign events keep their vanilla behavior.
+> ## ⚠️ Fire support has been REMOVED (v1.6.3)
+>
+> **The entire fire-support / artillery subsystem is gone in v1.6.3.** Unlimited calls, no cooldown, arrival
+> time, volley size, artillery dispersion, CAS accuracy and CAS target spreading are **no longer part of
+> CheatMode**, and the two built-in behaviors (faction-aware artillery damage, instant-volley compression) went
+> with them. The settings below were deleted as well — old configs simply have those keys ignored:
+> `InfiniteFireSupport`, `FireSupportNoCooldown`, `ArtilleryVolleyRounds`, `ArtilleryTimeToTarget`,
+> `ArtilleryAccuracy`, `CasAccuracy`, `CasSpreadTargets`.
+>
+> CheatMode no longer patches `ArtilleryBattery`, `FireMissionManager`, `CasSupportManager`, `CASController` or
+> `CASHardpoint` at all, so it cannot fight another artillery/CAS mod over the same objects any more.
+> **Use a dedicated fire-support mod for those features.**
+>
+> **Invincibility, infinite ammo / no-reload and ESP are unaffected.**
 
-Built by integrating and hardening the ideas behind four community mods: [GHPC_Artillery_Rework](https://github.com/QwertyRyo/GHPC_Artillery_Rework) · [InfiniteAmmo](https://github.com/Bluehawk8908/InfiniteAmmo) · [Invincible-Tank](https://github.com/QwertyRyo/Invincible-Tank) · [GHPCESP](https://github.com/k4yt3x/GHPCESP). See the [detailed comparison](docs/COMPARISON.en.md).
+An all-in-one MelonLoader cheat mod for [Gunner, HEAT, PC!](https://store.steampowered.com/app/1705180/Gunner_HEAT_PC/) that merges **invincibility, infinite ammo / no-reload and ESP** into a **single DLL**, adds **player-vs-friendly granularity**, and is carefully scoped so enemy units and scripted campaign events keep their vanilla behavior.
+
+Built by integrating and hardening the ideas behind three community mods: [InfiniteAmmo](https://github.com/Bluehawk8908/InfiniteAmmo) · [Invincible-Tank](https://github.com/QwertyRyo/Invincible-Tank) · [GHPCESP](https://github.com/k4yt3x/GHPCESP). See the [detailed comparison](docs/COMPARISON.en.md).
 
 > ⚠️ **Cheat mod.** Intended for single-player / private testing only. Not for competitive multiplayer.
 
@@ -35,8 +50,6 @@ Built by integrating and hardening the ideas behind four community mods: [GHPC_A
 - **Invincibility** — separately protect the player's own unit and/or friendly AI units.
 - **Infinite ammo** — player and/or friendly vehicles, infantry, throwables and crew-served weapon emplacements.
 - **No reload** (player vehicle only) — the clip never empties; toggled in-game with **F9**.
-- **Fire support** — unlimited player-side artillery/CAS calls, **no cooldown**, plus tunable **volley size**, **arrival time** and **accuracy**.
-- **Faction-aware artillery damage** — your faction's artillery fires live (damaging) rounds; the enemy's fires blanks.
 - **ESP** — toggle vehicles, ATGM and infantry boxes together with **F8**; labels show distance.
 
 All of the above can be switched on/off individually in `MelonPreferences.cfg`.
@@ -45,7 +58,7 @@ All of the above can be switched on/off individually in `MelonPreferences.cfg`.
 
 ## 2. Installation
 
-> Applies to `CheatMode.dll` v1.6.0.
+> Applies to `CheatMode.dll` v1.6.3.
 
 ### Prerequisites
 
@@ -66,7 +79,7 @@ All of the above can be switched on/off individually in `MelonPreferences.cfg`.
    ```
    If `Bin\Mods\` does not exist, create it (or let MelonLoader create it on first run).
 2. Copy the compiled **`CheatMode.dll`** into **`<game>\Bin\Mods\`**.
-3. **(Important)** If `Mods` still contains the standalone **`InfiniteAmmo.dll`**, **`Invincible_Tank.dll`**, **`GHPCESP.dll`** (or any older artillery DLL), **remove or disable them**. CheatMode already covers these features; having both causes duplicate Harmony patches and duplicate scene scans.
+3. **(Important)** If `Mods` still contains the standalone **`InfiniteAmmo.dll`**, **`Invincible_Tank.dll`**, **`GHPCESP.dll`**, **remove or disable them**. CheatMode already covers these features; having both causes duplicate Harmony patches and duplicate scene scans.
 4. Launch the game. On the first run the `[CheatMode]` section is created in `UserData\MelonPreferences.cfg`.
 5. To change defaults, exit the game and edit that file with a text editor, or use the in-game MelonLoader preferences panel.
 
@@ -128,36 +141,7 @@ CheatMode is split into five blocks; each can be toggled independently.
 
 > ✅ **Ammunition switching works while "No Reload" is on (fixed in 1.6.2):** selecting another type now swaps the clip **immediately** — `NoReloadAmmoSwitchPatch` issues one `FeedNewClip()` after a real type change, which the no-reload patch turns into an instant clip swap (no reload flow, no reload animation), and it keeps "clip + breech" equal to exactly one full clip (no extra round). Only the *current* clip changes; the round already in the breech keeps its old type until it is fired. (Before 1.6.2 you had to press **`F9`** off → switch → on again.)
 
-### 4.4 Fire Support / Artillery
-
-| Setting | Default | Effect |
-|---|---|---|
-| `InfiniteFireSupport` | `true` | Artillery / CAS **calls never run out** — player faction only; enemy and script-planned strikes stay vanilla (config only, no hotkey / HUD). |
-| `FireSupportNoCooldown` | `true` | Fire support has **no cooldown** — player faction only (config only). |
-| `ArtilleryVolleyRounds` | `-1` | Rounds per volley: `-1` = the battery's vanilla count; otherwise a fixed 1–128. Player faction only. |
-| `ArtilleryTimeToTarget` | `1.0` | Arrival time as a fraction of vanilla: `1.0` = vanilla; `0.5` = half; `0.1` = 10%; `-1.0` or any `<=0` = **instant** (see notes; player faction, on-call calls only). |
-| `ArtilleryAccuracy` | `1.0` | Dispersion as a fraction of vanilla: `1.0` = vanilla spread; smaller = tighter; `0.1` = 10%; `-1.0` or `<=0` = zero dispersion (all rounds on one point). Player faction only. |
-| `CasAccuracy` | `1.0` | CAS launch dispersion as a fraction of the weapon's natural spread: `1.0` = natural; smaller = tighter; `0.1` = 10%; `-1.0` or `<=0` = zero spread (rounds follow the aim line exactly). Applies to every CAS attack type. |
-| `CasSpreadTargets` | `true` | A batch of CAS planes picks **different targets** instead of all locking the same one (only changes anything when several enemies are within reach; the nearest unclaimed target within 3 km of the called position is used). |
-
-- These fire-support parameters apply **only to batteries/airframes on the player's faction**; enemy batteries and **script-planned story strikes always stay vanilla**, so campaign scripts are never disturbed.
-
-**Always-on built-in behaviors (not configurable):**
-
-- **Faction-aware artillery damage** — your faction's artillery fires live (damaging) rounds; the enemy's fires blanks (no damage). To disable it you must edit the `ArtilleryFactionAwareEnabled` constant in `CheatMode.cs` and recompile.
-- **Volley compression** — when `ArtilleryTimeToTarget <= 0` ("instant"), the whole volley is fired on the same frame the call succeeds (a true single-volley strike) and the panel countdown is zeroed.
-
-**`ArtilleryTimeToTarget` notes**
-
-For a strike, total arrival time = **first-round delay** + **spread time** (`(rounds-1) × per-round interval`) + **shell flight time**.
-
-- As soon as the value is `< 1`, the first-round delay is removed (the first round starts dropping immediately); the setting only controls the interval between rounds.
-- Example (2S3, vanilla: 30 s first-round delay, 12 rounds, 3 s interval):
-  - `0.5` → no first-round delay, 1.5 s interval → the volley finishes dropping in ~16.5 s;
-  - `0.1` → 0.3 s interval;
-  - `-1.0` → all 12 rounds drop on the same frame (truly one volley).
-
-### 4.5 ESP
+### 4.4 ESP
 
 | Setting | Default | Effect |
 |---|---|---|
@@ -172,15 +156,14 @@ For a strike, total arrival time = **first-round delay** + **spread time** (`(ro
 ## 5. Usage Notes
 
 1. **This is a cheat.** Use it for single-player / private testing. In some multiplayer/anti-cheat contexts this may violate rules — at your own risk.
-2. **Do not run it alongside the four standalone mods.** Remove `InfiniteAmmo.dll`, `Invincible_Tank.dll`, `GHPCESP.dll`, and any older artillery DLL to avoid duplicate patches/scans.
-3. **Config changes take effect on restart** (or via the MelonLoader preferences panel; most apply immediately, and artillery parameters apply on the next call).
-4. **Changing built-in behavior requires recompiling** (e.g. `ArtilleryFactionAwareEnabled`, volley compression have no settings).
+2. **Do not run it alongside the three standalone mods.** Remove `InfiniteAmmo.dll`, `Invincible_Tank.dll` and `GHPCESP.dll` to avoid duplicate patches/scans.
+3. **Config changes take effect on restart** (or via the MelonLoader preferences panel; most apply immediately).
+4. **Changing built-in behavior requires recompiling** (built-in behaviors have no settings entries).
 5. **`NoReload` only affects your vehicle.** Don't expect friendly AI to skip reloading.
 6. **Ammunition switching is instant while "No Reload" is on** (since 1.6.2): just select the type — the clip is swapped immediately and no extra round is added. The round already in the breech keeps its old type until it is fired.
 7. **Friendly detection uses an authoritative faction cascade.** In custom scenes (e.g. Fulda 1989), if you see "0 units granted", check the log line `[CheatMode] Scene scan finished: ... side=... (via ...)`, which shows the faction source (`SceneController` / `MissionData` / `PlayerUnit`) to help diagnose.
-8. **AAR / replay:** instant artillery volleys are deliberately handed back to the vanilla per-round flow during AAR replay to avoid desync.
-9. **Compatibility:** written against a specific GHPC build using the publicized assembly and private/internal fields via `AccessTools` reflection. A major game update may break it until adapted.
-10. **Backup:** before updating the game, back up `UserData\MelonPreferences.cfg` so you can restore your settings.
+8. **Compatibility:** written against a specific GHPC build using the publicized assembly and private/internal fields via `AccessTools` reflection. A major game update may break it until adapted.
+9. **Backup:** before updating the game, back up `UserData\MelonPreferences.cfg` so you can restore your settings.
 
 ---
 
@@ -189,7 +172,6 @@ For a strike, total arrival time = **first-round delay** + **spread time** (`(ro
 - **Not loading / no `[CheatMode] Loaded` in log** → verify the DLL is in `Bin\Mods\`, MelonLoader version, and game path references.
 - **Startup error "Another instance of CheatMode is already loaded"** → two copies are in `Mods`; delete the extra.
 - **ESP invisible** → press F8 to confirm it is on; ensure the target is in view and is not the unit you are in.
-- **Enemy artillery still fires** → that is expected. Faction-aware damage only makes the enemy fire *blanks*; if you see enemy shells with actual effect, that battery is a temporary scripted strike (by design it stays vanilla).
 
 ---
 
@@ -209,7 +191,6 @@ Or open `CheatMode.csproj` in Visual Studio and build `Release`.
 CheatMode/
 ├── CheatMode.cs                Main entry: settings, faction cascade, ammo scan, ESP rendering
 ├── CheatAmmoPatches.cs         Infinite ammo & no-reload patches (vehicles, infantry, throwables, emplacements)
-├── CheatFireSupportPatches.cs  Artillery & CAS fire-support cheats
 ├── CheatInvinciblePatches.cs   Invincibility damage-filter patches
 ├── CheatESPPatches.cs          ESP unit-tracking patches
 ├── Render.cs                   IMGUI drawing helpers
@@ -228,8 +209,7 @@ CheatMode incorporates code derived from community mods distributed under the fo
 - [Invincible-Tank](https://github.com/QwertyRyo/Invincible-Tank) — AGPL-3.0 (QwertyRyo)
 - [InfiniteAmmo](https://github.com/Bluehawk8908/InfiniteAmmo) — GPL-3.0 (Bluehawk8908)
 - [GHPCESP](https://github.com/k4yt3x/GHPCESP) — MIT (K4YT3X)
-- [GHPC_Artillery_Rework](https://github.com/QwertyRyo/GHPC_Artillery_Rework) (QwertyRyo) — inspiration for the fire-support/artillery subsystem
 
 **Related documents**
 
-- Full comparison of CheatMode against these four mods (features, implementation differences, fixes/improvements): [docs/COMPARISON.en.md](docs/COMPARISON.en.md)
+- Full comparison of CheatMode against these three mods (features, implementation differences, fixes/improvements): [docs/COMPARISON.en.md](docs/COMPARISON.en.md)
