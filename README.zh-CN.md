@@ -56,7 +56,7 @@
 
 ## 2. 安装
 
-> 适用于 `CheatMode.dll` v1.6.3。
+> 适用于 `CheatMode.dll` v1.6.4。
 
 ### 前置条件
 
@@ -148,6 +148,10 @@ CheatMode 分五大块，每一项都能单独开关。
 - 游戏内按 **`F8`** 开/关，同时显示/隐藏**载具、反坦克导弹、步兵**的方框 ESP。
 - 阵营着色：蓝 = 蓝方、红 = 红方、绿 = 绿方、黄 = 中立、白 = 其它；被击毁（neutralized）显示为灰色。
 - 每单位标签显示名称与距离，如 `T-80BVM [342m]`。
+- ESP 固定为无限距离、关闭屏幕中心到单位的连线，无需额外配置。
+- 恢复原来的宽框/方框比例，标签位于左上方；屏幕外降低边界刷新频率，拥挤场景的初始框会在数帧内逐步出现。
+
+优化细节与待实测项目见 [优化说明](docs/Optimization_Notes.zh-CN.md)。
 
 ---
 
@@ -187,10 +191,12 @@ MSBuild.exe CheatMode.sln /p:Configuration=Release
 
 ```
 CheatMode/
-├── CheatMode.cs                主入口：配置、阵营级联、弹药扫描、ESP 绘制
+├── CheatMode.cs                主入口：配置、阵营级联、弹药扫描
 ├── CheatAmmoPatches.cs         无限弹药 / 无需装填补丁（载具、步兵、投掷武器、阵地）
 ├── CheatInvinciblePatches.cs   无敌伤害过滤补丁
 ├── CheatESPPatches.cs          ESP 单位追踪补丁
+├── CheatESP.cs                 ESP 边界缓存、视锥剔除与绘制
+├── EspGeometry.cs              托管投影运算及原版方框形状
 ├── Render.cs                   IMGUI 绘制辅助
 ├── Properties/AssemblyInfo.cs
 └── CheatMode.csproj

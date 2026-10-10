@@ -6,12 +6,24 @@ namespace CheatMode
 {
     internal class CheatESPPatches
     {
+        [HarmonyPatch(typeof(InfantryEmplacementHolder), "Awake")]
+        internal static class InfantryEmplacementHolder_Awake
+        {
+            private static void Postfix(InfantryEmplacementHolder __instance)
+            {
+                if (CheatModeMod.Instance != null)
+                {
+                    CheatModeMod.Instance.RegisterEmplacementHolder(__instance);
+                }
+            }
+        }
+
         [HarmonyPatch(typeof(Unit), "Start")]
         internal static class Unit_Start
         {
             private static void Postfix(Unit __instance)
             {
-                if (CheatModeMod.Instance == null)
+                if (CheatModeMod.Instance == null || __instance is InfantryUnit)
                 {
                     return;
                 }

@@ -3,6 +3,8 @@ using System.Reflection;
 using GHPC;
 using GHPC.Equipment;
 using GHPC.Humans;
+using GHPC.Infantry;
+using GHPC.Infantry.Gore;
 using GHPC.Player;
 using GHPC.Utility;
 using HarmonyLib;
@@ -17,6 +19,13 @@ namespace CheatMode
     /// </summary>
     internal static class CheatDamageFilter
     {
+        private static readonly BodyPart[] BodyParts = (BodyPart[])Enum.GetValues(typeof(BodyPart));
+
+        internal static bool AnyInvincibilityEnabled
+        {
+            get { return SelfInvincibleEnabled || FriendlyInvincibleEnabled; }
+        }
+
         public static GHPC.Unit CurrentPlayerUnit
         {
             get
@@ -45,7 +54,7 @@ namespace CheatMode
 
         public static bool IsProtectedUnit(GHPC.IUnit unit)
         {
-            if (unit == null)
+            if (!AnyInvincibilityEnabled || unit == null)
             {
                 return false;
             }
@@ -63,7 +72,7 @@ namespace CheatMode
 
         public static bool IsProtectedComponent(GHPC.Equipment.DestructibleComponent component)
         {
-            if (component == null)
+            if (!AnyInvincibilityEnabled || component == null)
             {
                 return false;
             }
@@ -79,12 +88,12 @@ namespace CheatMode
 
         public static bool IsProtectedHuman(GHPC.Humans.Human human)
         {
-            if (human == null)
+            if (!AnyInvincibilityEnabled || human == null)
             {
                 return false;
             }
 
-            foreach (GHPC.Humans.BodyPart part in Enum.GetValues(typeof(GHPC.Humans.BodyPart)))
+            foreach (GHPC.Humans.BodyPart part in BodyParts)
             {
                 GHPC.Equipment.IDestructible component = human.GetBodyPartDestructible(part);
                 if (component != null && IsProtectedUnit(component.Unit))
@@ -99,6 +108,11 @@ namespace CheatMode
         public static bool TryGetHitUnit(Collider cObject, GHPC.AI.Interfaces.ITarget targetStruck, out GHPC.IUnit unit)
         {
             unit = null;
+
+            if (!AnyInvincibilityEnabled)
+            {
+                return false;
+            }
 
             if (targetStruck != null)
             {
@@ -639,6 +653,32 @@ namespace CheatMode
         static bool Prefix(GHPC.Infantry.InfantryUnit __instance)
         {
             return !CheatDamageFilter.IsProtectedUnit(__instance);
+        }
+    }
+
+    /// <summary>
+    /// HumanGore registers limb hits before InfantryUnit receives the dismemberment event.
+    /// Blocking only the latter leaves the gore limb activated while the unit remains alive,
+    /// so reject protected hits before gore activation to keep animation and gore state consistent.
+    /// </summary>
+    [HarmonyPatch]
+    public static class Patch_HumanGore_RegisterHit
+    {
+        static MethodBase TargetMethod()
+        {
+            return AccessTools.Method(typeof(HumanGore), "RegisterHit");
+        }
+
+        [HarmonyPrefix]
+        static bool Prefix(HumanGore __instance)
+        {
+            if (__instance == null || !CheatDamageFilter.AnyInvincibilityEnabled)
+            {
+                return true;
+            }
+
+            InfantryUnit infantry = __instance.GetComponentInParent<InfantryUnit>();
+            return !CheatDamageFilter.IsProtectedUnit(infantry);
         }
     }
 

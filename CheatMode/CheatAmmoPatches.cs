@@ -53,8 +53,8 @@ namespace CheatMode
     {
         private static bool Prefix(GHPC.Weapons.AmmoFeed __instance)
         {
-            if (!CheatModeMod.NoReloadEnabled || !CheatModeMod.Managed(__instance)
-                || !CheatModeMod.IsPlayerVehicleComponent(__instance))
+            if (!CheatModeMod.NoReloadEnabled || !CheatModeMod.IsPlayerVehicleComponent(__instance)
+                || !CheatModeMod.Managed(__instance))
             {
                 return true; // Disabled / not managed by this mod / not the player vehicle: keep the vanilla reload flow.
             }
@@ -115,8 +115,8 @@ namespace CheatMode
             {
                 return;
             }
-            if (!CheatModeMod.NoReloadEnabled || !CheatModeMod.Managed(__instance)
-                || !CheatModeMod.IsPlayerVehicleComponent(__instance))
+            if (!CheatModeMod.NoReloadEnabled || !CheatModeMod.IsPlayerVehicleComponent(__instance)
+                || !CheatModeMod.Managed(__instance))
             {
                 return;
             }
@@ -167,8 +167,8 @@ namespace CheatMode
     {
         private static void Prefix(GHPC.Weapons.AmmoFeed __instance, AmmoType ammoType, LiveRound round)
         {
-            if (!CheatModeMod.NoReloadEnabled || !CheatModeMod.Managed(__instance)
-                || !CheatModeMod.IsPlayerVehicleComponent(__instance))
+            if (!CheatModeMod.NoReloadEnabled || !CheatModeMod.IsPlayerVehicleComponent(__instance)
+                || !CheatModeMod.Managed(__instance))
             {
                 return;
             }
@@ -191,6 +191,13 @@ namespace CheatMode
     [HarmonyPatch(typeof(GHPC.Weapons.AmmoFeed), "FinishClipReload")]
     public static class CheatModeReplenishPatch
     {
+        public struct ReloadSnapshot
+        {
+            public GHPC.Weapons.AmmoRack Rack;
+            public AmmoType.AmmoClip ClipType;
+            public int Count;
+        }
+
         internal static readonly AccessTools.FieldRef<GHPC.Weapons.AmmoRack, bool> VisualSlotSetupRef =
             AccessTools.FieldRefAccess<GHPC.Weapons.AmmoRack, bool>("_didVisualSlotSetup");
 
@@ -242,9 +249,9 @@ namespace CheatMode
             return count;
         }
 
-        private static void Prefix(GHPC.Weapons.AmmoFeed __instance, out int __state)
+        private static void Prefix(GHPC.Weapons.AmmoFeed __instance, out ReloadSnapshot __state)
         {
-            __state = 0;
+            __state = new ReloadSnapshot();
 
             if (!CheatModeMod.Managed(__instance))
             {
@@ -262,18 +269,25 @@ namespace CheatMode
                 return;
             }
 
-            __state = CountClips(readyRack, queuedClipType);
+            __state = new ReloadSnapshot
+            {
+                Rack = readyRack,
+                ClipType = queuedClipType,
+                Count = CountClips(readyRack, queuedClipType)
+            };
         }
 
-        private static void Postfix(GHPC.Weapons.AmmoFeed __instance, int __state)
+        private static void Postfix(GHPC.Weapons.AmmoFeed __instance, ReloadSnapshot __state)
         {
             if (!CheatModeMod.Managed(__instance))
             {
                 return;
             }
 
-            GHPC.Weapons.AmmoRack readyRack = __instance.ReadyRack;
-            AmmoType.AmmoClip loadedClipType = __instance.LoadedClipType != null ? __instance.LoadedClipType : __instance.QueuedClipType;
+            // Compare the same rack and type captured before vanilla reload. A failed type
+            // switch can leave LoadedClipType referring to the previous clip.
+            GHPC.Weapons.AmmoRack readyRack = __state.Rack;
+            AmmoType.AmmoClip loadedClipType = __state.ClipType;
             if (readyRack == null || loadedClipType == null)
             {
                 return;
@@ -286,7 +300,7 @@ namespace CheatMode
                 return;
             }
 
-            int consumed = __state - CountClips(readyRack, loadedClipType);
+            int consumed = __state.Count - CountClips(readyRack, loadedClipType);
             for (int i = 0; i < consumed; i++)
             {
                 ReplenishClip(readyRack, loadedClipType);
@@ -358,8 +372,7 @@ namespace CheatMode
             }
 
             InfantryUnit unit = __instance.InfantryUnit;
-            bool managed = (unit != null && unit.GetComponent<CheatMarker>() != null)
-                || (unit == null && __instance.GetComponentInParent<CheatMarker>() != null);
+            bool managed = unit != null ? CheatModeMod.ManagedUnit(unit) : CheatModeMod.Managed(__instance);
             if (!managed)
             {
                 return;
@@ -409,8 +422,7 @@ namespace CheatMode
             }
 
             InfantryUnit unit = __instance.InfantryUnit;
-            bool managed = (unit != null && unit.GetComponent<CheatMarker>() != null)
-                || (unit == null && __instance.GetComponentInParent<CheatMarker>() != null);
+            bool managed = unit != null ? CheatModeMod.ManagedUnit(unit) : CheatModeMod.Managed(__instance);
             if (!managed)
             {
                 return;

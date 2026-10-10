@@ -2,6 +2,26 @@
 
 All notable changes to the **CheatMode** all-in-one mod.
 
+## [1.6.4] — 2026-10-10
+
+### Fixed
+- Reject protected infantry hits before gore activation, keeping gore and invincibility state consistent. Invalid or stretched infantry collider bounds now use a bounded root-sized ESP fallback, including when every collider is invalid.
+- ESP rectangles use all eight bounds corners, near-plane clipping and consistent viewport scaling; narrow infantry boxes are no longer forced square. Current-camera projection and root translation are applied on every repaint instead of caching stale screen positions.
+- ESP restores the legacy box proportions: root-centered placement, minimum width equal to height, faction colors, 2-pixel borders and upper-left labels, while keeping near-plane clipping, resolution scaling and invalid infantry bounds protection.
+- Ammo patches recheck the current self/friendly settings and ownership. Existing markers no longer grant infinite ammo once that unit becomes ineligible; disabling the setting stops future replenishment while rounds already granted remain.
+- Reload replenishment compares the same rack and ammunition type before and after the vanilla reload, avoiding false counts when loading fails or the selected type changes.
+
+### Performance
+- Repaint-only GUI drawing; reusable collider lists with staggered rediscovery; destroyed-unit cache cleanup; 20 Hz world-bounds refresh; frustum rejection before screen projection; label strings updated only when the name or rounded distance changes.
+- Collider hierarchy discovery is limited to four units per repaint with staggered subsequent scans, and camera matrices are read once per repaint with managed projection math. Wholly front-facing bounds skip near-plane edge clipping, visible labels update at 10 Hz and text measurements are cached.
+- Direct textured rectangles for box borders; reusable label content; lazy GUI style initialization and reliable GUI state restoration.
+- Emplacement creation tracking replaces periodic scene-wide object searches, with one bootstrap search on game readiness.
+- Cache body-part enum values and skip hierarchy/body-part searches while invincibility is disabled. Unmarked units are rejected before ammo faction checks.
+
+### Validation
+- Release build passes against the locally installed game assemblies, together with 5,013 ESP projection assertions against the installed Unity managed assembly, covering 1,000 reference comparisons across camera positions/yaw/pitch, zoom, resolutions and unit proportions, plus near-plane, off-screen, invalid-input and orthographic cases.
+- Metadata inspection found all 66 named Harmony targets/reflection members in the installed `Assembly-CSharp.dll`. These checks confirm member existence and projection correctness only; they do not prove successful patch application in a running game, and no in-game frame-time or model-animation regression measurement was performed.
+
 ## [1.6.3] — 2026-09-12
 
 ### Removed

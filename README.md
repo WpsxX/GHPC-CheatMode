@@ -58,7 +58,7 @@ All of the above can be switched on/off individually in `MelonPreferences.cfg`.
 
 ## 2. Installation
 
-> Applies to `CheatMode.dll` v1.6.3.
+> Applies to `CheatMode.dll` v1.6.4.
 
 ### Prerequisites
 
@@ -150,6 +150,10 @@ CheatMode is split into five blocks; each can be toggled independently.
 - Press **`F8`** in-game to toggle; shows/hides **vehicle, ATGM and infantry** boxes together.
 - Faction colors: blue = Blue, red = Red, green = Green, yellow = Neutral, white = other; neutralized units turn gray.
 - Each label shows name + distance, e.g. `T-80BVM [342m]`.
+- ESP uses a fixed unlimited range and draws no snap lines; no extra configuration is required.
+- Boxes retain the original wide/square proportions, with labels at the upper-left. Bounds refresh less often outside the view; initial boxes may appear over several frames in crowded scenes.
+
+See [optimization notes (Chinese)](docs/Optimization_Notes.zh-CN.md) for changes and remaining runtime checks.
 
 ---
 
@@ -189,10 +193,12 @@ Or open `CheatMode.csproj` in Visual Studio and build `Release`.
 
 ```
 CheatMode/
-├── CheatMode.cs                Main entry: settings, faction cascade, ammo scan, ESP rendering
+├── CheatMode.cs                Main entry: settings, faction cascade, ammo scan
 ├── CheatAmmoPatches.cs         Infinite ammo & no-reload patches (vehicles, infantry, throwables, emplacements)
 ├── CheatInvinciblePatches.cs   Invincibility damage-filter patches
 ├── CheatESPPatches.cs          ESP unit-tracking patches
+├── CheatESP.cs                 ESP bounds cache, frustum culling and drawing
+├── EspGeometry.cs              Managed projection and legacy box geometry
 ├── Render.cs                   IMGUI drawing helpers
 ├── Properties/AssemblyInfo.cs
 └── CheatMode.csproj

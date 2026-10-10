@@ -71,6 +71,8 @@
     <Compile Include="CheatAmmoPatches.cs" />
     <Compile Include="CheatInvinciblePatches.cs" />
     <Compile Include="CheatESPPatches.cs" />
+    <Compile Include="CheatESP.cs" />
+    <Compile Include="EspGeometry.cs" />
     <Compile Include="Render.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>

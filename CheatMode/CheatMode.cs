@@ -17,7 +17,7 @@ using HarmonyLib;
 using MelonLoader;
 using UnityEngine;
 
-[assembly: MelonInfo(typeof(CheatMode.CheatModeMod), "CheatMode", "1.6.3", "CheatMode")]
+[assembly: MelonInfo(typeof(CheatMode.CheatModeMod), "CheatMode", "1.6.4", "CheatMode")]
 [assembly: MelonGame("Radian Simulations LLC", "GHPC")]
 
 namespace CheatMode
@@ -26,18 +26,19 @@ namespace CheatMode
     /// Marker component. Attached to units (vehicles / infantry) that receive infinite ammo,
     /// as well as to infantry crew-served weapon emplacements. Its purposes are:
     /// 1. Prevent the same unit from being processed twice;
-    /// 2. Let the infinite-ammo / no-reload patches quickly decide whether an object is
-    ///    managed by this mod.
+    /// 2. Identify seeded objects for the ammo patches. Eligibility is also checked against
+    ///    current settings and ownership, since markers outlive player switches and toggles.
     /// </summary>
     public class CheatMarker : MonoBehaviour
     {
     }
 
-    public class CheatModeMod : MelonMod
+    public partial class CheatModeMod : MelonMod
     {
         public static CheatModeMod Instance;
 
         private const float RescanIntervalSeconds = 2.5f;
+        private const float EspRefreshIntervalSeconds = 0.05f;
 
         private static MelonPreferences_Category _prefs;
 
@@ -52,8 +53,10 @@ namespace CheatMode
         // ESP unit lists
         public List<Unit> Units = new List<Unit>();
         public List<Unit> InfantryUnits = new List<Unit>();
+        internal readonly List<InfantryEmplacementHolder> EmplacementHolders = new List<InfantryEmplacementHolder>();
 
         private float _rescanTimer;
+        private float _espRefreshTimer;
 
         // Ammo-feed queue reflection refs / setters used for "no reload"
         private static readonly AccessTools.FieldRef<GHPC.Weapons.AmmoFeed, Queue<AmmoType>> VehicleClipMainRef =
@@ -132,6 +135,8 @@ namespace CheatMode
         public override void OnSceneWasLoaded(int buildIndex, string sceneName)
         {
             StateController.RunOrDefer(GameState.GameReady, new GameStateEventHandler(OnGameReady), GameStatePriority.Medium);
+            ResetEspCache();
+            _rescanTimer = 0f;
         }
 
         public override void OnUpdate()
@@ -172,6 +177,7 @@ namespace CheatMode
             {
                 if (Units[i] == null)
                 {
+                    RemoveEspUnit(Units[i]);
                     Units.RemoveAt(i);
                 }
             }
@@ -179,13 +185,28 @@ namespace CheatMode
             {
                 if (InfantryUnits[i] == null)
                 {
+                    RemoveEspUnit(InfantryUnits[i]);
                     InfantryUnits.RemoveAt(i);
                 }
+            }
+
+            if (ESPEnabled != null && ESPEnabled.Value)
+            {
+                RefreshEspCache();
+            }
+            else
+            {
+                _espBoxes.Clear();
+                _espRefreshTimer = 0f;
             }
         }
 
         public override void OnGUI()
         {
+            if (Event.current == null || Event.current.type != EventType.Repaint)
+            {
+                return;
+            }
             // Show the on-screen hint while "no reload" is on; hide it when off (same style as the ESP header).
             if (NoReload != null && NoReload.Value)
             {
@@ -198,12 +219,16 @@ namespace CheatMode
             }
 
             Render.DrawString(new Vector2(5, 2), "CheatMode ESP Enabled", Color.red, false);
-            DrawUnitsESP(Units);
-            DrawUnitsESP(InfantryUnits);
+            DrawCachedEsp();
         }
 
         private IEnumerator OnGameReady(GameState _)
         {
+            // Bootstrap once; Awake patches track reinforcements without periodic global scans.
+            foreach (InfantryEmplacementHolder holder in GameObject.FindObjectsByType<InfantryEmplacementHolder>(FindObjectsSortMode.None))
+            {
+                RegisterEmplacementHolder(holder);
+            }
             ApplyInfiniteAmmo(true);
             yield break;
         }
@@ -229,7 +254,77 @@ namespace CheatMode
 
         internal static bool Managed(MonoBehaviour component)
         {
-            return component != null && component.GetComponentInParent<CheatMarker>() != null;
+            if (component == null || (!SelfAmmoEnabled && !FriendlyAmmoEnabled))
+            {
+                return false;
+            }
+            Unit owner = component.GetComponentInParent<Unit>();
+            if (owner != null)
+            {
+                return ManagedUnit(owner);
+            }
+            InfantryEmplacementHolder holder = component.GetComponentInParent<InfantryEmplacementHolder>();
+            if (holder == null || holder.GetComponent<CheatMarker>() == null)
+            {
+                return false;
+            }
+            UnitInfoBroker vehicle = holder.AttachedVehicleInfoBroker;
+            if (vehicle != null && IsAmmoEligibleUnit(vehicle.Unit))
+            {
+                return true;
+            }
+            InfantryEmplacement[] emplacements = holder.Emplacements;
+            if (emplacements != null)
+            {
+                foreach (InfantryEmplacement emplacement in emplacements)
+                {
+                    if (emplacement != null && IsAmmoEligibleUnit(emplacement.AssignedUnit))
+                    {
+                        return true;
+                    }
+                }
+            }
+            return false;
+        }
+
+        internal static bool ManagedUnit(Unit unit)
+        {
+            // Most firing attempts are from unmarked enemies. Reject them before faction/platoon work.
+            return (SelfAmmoEnabled || FriendlyAmmoEnabled) && unit != null
+                && unit.GetComponent<CheatMarker>() != null && IsAmmoEligibleUnit(unit);
+        }
+
+        private static bool IsAmmoEligibleUnit(Unit unit)
+        {
+            if (unit == null || unit.Neutralized || (!SelfAmmoEnabled && !FriendlyAmmoEnabled))
+            {
+                return false;
+            }
+            PlayerInput input = PlayerInput.Instance;
+            Unit player = input != null ? input.CurrentPlayerUnit : null;
+            if (unit == player)
+            {
+                return SelfAmmoEnabled;
+            }
+            if (!FriendlyAmmoEnabled)
+            {
+                return false;
+            }
+            string source;
+            if (unit.Allegiance == ResolveFriendlyFaction(player, out source))
+            {
+                return true;
+            }
+            PlatoonData platoon = player != null ? PlatoonManager.GetPlatoonDataByUnit(player) : null;
+            return platoon != null && platoon.Units != null && platoon.Units.Contains(unit);
+        }
+
+        internal void RegisterEmplacementHolder(InfantryEmplacementHolder holder)
+        {
+            if (holder != null && !EmplacementHolders.Contains(holder))
+            {
+                EmplacementHolders.Add(holder);
+            }
         }
 
         /// <summary>
@@ -259,21 +354,11 @@ namespace CheatMode
         // Infinite-ammo scan logic (derived from InfiniteAmmo)
         // ---------------------------------------------------------------
 
-        private void ApplyInfiniteAmmo(bool logSummary)
+        internal static Faction ResolveFriendlyFaction(Unit playerUnit, out string factionSource)
         {
-            PlayerInput playerInput = PlayerInput.Instance;
-            Unit playerUnit = (playerInput != null) ? playerInput.CurrentPlayerUnit : null;
-
-            bool selfAmmo = SelfAmmoEnabled;
-            bool friendlyAmmo = FriendlyAmmoEnabled;
-            if (!selfAmmo && !friendlyAmmo)
-            {
-                return;
-            }
-
             // Resolve the player's faction (authoritative cascade).
             Faction friendlyFaction = Faction.Neutral;
-            string factionSource = "none";
+            factionSource = "none";
             if (SceneController.TargetSpawningFaction != Faction.Neutral)
             {
                 friendlyFaction = SceneController.TargetSpawningFaction;
@@ -304,6 +389,31 @@ namespace CheatMode
                 factionSource = "fallback";
             }
 
+            return friendlyFaction;
+        }
+
+        private void ApplyInfiniteAmmo(bool logSummary)
+        {
+            for (int i = EmplacementHolders.Count - 1; i >= 0; i--)
+            {
+                if (EmplacementHolders[i] == null)
+                {
+                    EmplacementHolders.RemoveAt(i);
+                }
+            }
+            PlayerInput playerInput = PlayerInput.Instance;
+            Unit playerUnit = (playerInput != null) ? playerInput.CurrentPlayerUnit : null;
+
+            bool selfAmmo = SelfAmmoEnabled;
+            bool friendlyAmmo = FriendlyAmmoEnabled;
+            if (!selfAmmo && !friendlyAmmo)
+            {
+                return;
+            }
+
+            string factionSource;
+            Faction friendlyFaction = ResolveFriendlyFaction(playerUnit, out factionSource);
+
             int enabledCount = 0;
 
             // 1. The player's own unit (separate toggle).
@@ -317,7 +427,10 @@ namespace CheatMode
             if (friendlyAmmo)
             {
                 // 2. Every live unit of the friendly faction.
-                List<Unit> friendlies = SceneUnitsManager.AllLiveUnitsByFaction[(int)friendlyFaction];
+                List<Unit>[] liveUnits = SceneUnitsManager.AllLiveUnitsByFaction;
+                int factionIndex = (int)friendlyFaction;
+                List<Unit> friendlies = liveUnits != null && factionIndex >= 0 && factionIndex < liveUnits.Length
+                    ? liveUnits[factionIndex] : null;
                 if (friendlies != null)
                 {
                     foreach (Unit unit in friendlies)
@@ -362,10 +475,10 @@ namespace CheatMode
                 }
 
                 // 4. Infantry crew-served weapon emplacements.
-                InfantryEmplacementHolder[] holders = GameObject.FindObjectsByType<InfantryEmplacementHolder>(FindObjectsSortMode.None);
-                foreach (InfantryEmplacementHolder holder in holders)
+                foreach (InfantryEmplacementHolder holder in EmplacementHolders)
                 {
-                    if (holder == null || holder.GetComponent<CheatMarker>() != null || !IsHolderFriendly(holder, friendlyFaction))
+                    if (holder == null || !holder.gameObject.activeInHierarchy
+                        || holder.GetComponent<CheatMarker>() != null || !IsHolderFriendly(holder, friendlyFaction))
                     {
                         continue;
                     }
@@ -488,173 +601,5 @@ namespace CheatMode
             }
         }
 
-        // ---------------------------------------------------------------
-        // ESP rendering
-        // ---------------------------------------------------------------
-
-        private void DrawUnitsESP(List<Unit> unitsToDraw)
-        {
-            if (PlayerInput.Instance == null)
-            {
-                return;
-            }
-
-            Camera mainCamera = CameraManager.MainCam;
-            if (mainCamera == null)
-            {
-                return;
-            }
-
-            foreach (Unit unit in unitsToDraw)
-            {
-                if (unit == null || unit == PlayerInput.Instance.CurrentPlayerUnit)
-                {
-                    continue;
-                }
-
-                (Vector3 componentTopPos, Vector3 componentBottomPos, float componentWidth) = GetComponentDimensions(unit, false, mainCamera);
-
-                if (componentTopPos.z > 0f && componentBottomPos.z > 0f)
-                {
-                    Color highlightColor;
-                    switch (unit.Allegiance)
-                    {
-                        case Faction.Blue:
-                            highlightColor = Color.blue;
-                            break;
-                        case Faction.Red:
-                            highlightColor = Color.red;
-                            break;
-                        case Faction.Green:
-                            highlightColor = Color.green;
-                            break;
-                        case Faction.Neutral:
-                            highlightColor = Color.yellow;
-                            break;
-                        default:
-                            highlightColor = Color.white;
-                            break;
-                    }
-
-                    if (unit.Neutralized)
-                    {
-                        highlightColor = Color.gray;
-                    }
-
-                    Unit playerUnit = PlayerInput.Instance.CurrentPlayerUnit;
-                    string label = unit.FriendlyName;
-                    if (playerUnit != null)
-                    {
-                        float distance = Vector3.Distance(playerUnit.transform.position, unit.transform.position);
-                        label = unit.FriendlyName + " [" + distance.ToString("F0") + "m]";
-                    }
-
-                    DrawBoxESP(componentBottomPos, componentTopPos, highlightColor, componentWidth, true, label);
-                }
-            }
-        }
-
-        private (Vector3, Vector3, float) GetComponentDimensions(Component component, bool pivotPoint, Camera camera)
-        {
-            if (component == null || camera == null)
-            {
-                return (Vector3.zero, Vector3.zero, 0f);
-            }
-
-            Vector3 componentPos = component.transform.position;
-
-            Collider[] colliders = component.GetComponentsInChildren<Collider>();
-            if (colliders.Length == 0)
-            {
-                return (componentPos, componentPos, 0f);
-            }
-
-            Bounds combinedBounds = colliders[0].bounds;
-            for (int i = 1; i < colliders.Length; i++)
-            {
-                combinedBounds.Encapsulate(colliders[i].bounds);
-            }
-
-            Vector3 componentTopPos = componentPos;
-            Vector3 componentBottomPos = componentPos;
-
-            if (pivotPoint)
-            {
-                float pivotOffsetY = componentPos.y - combinedBounds.center.y;
-                componentTopPos.y = combinedBounds.max.y + pivotOffsetY;
-                componentBottomPos.y = combinedBounds.min.y + pivotOffsetY;
-            }
-            else
-            {
-                componentTopPos.y = combinedBounds.max.y;
-                componentBottomPos.y = combinedBounds.min.y;
-            }
-
-            Vector3[] corners = new Vector3[8];
-            Vector3 center = combinedBounds.center;
-            Vector3 extents = combinedBounds.extents;
-
-            corners[0] = center + new Vector3(-extents.x, -extents.y, -extents.z);
-            corners[1] = center + new Vector3(-extents.x, -extents.y, extents.z);
-            corners[2] = center + new Vector3(-extents.x, extents.y, -extents.z);
-            corners[3] = center + new Vector3(-extents.x, extents.y, extents.z);
-            corners[4] = center + new Vector3(extents.x, -extents.y, -extents.z);
-            corners[5] = center + new Vector3(extents.x, -extents.y, extents.z);
-            corners[6] = center + new Vector3(extents.x, extents.y, -extents.z);
-            corners[7] = center + new Vector3(extents.x, extents.y, extents.z);
-
-            Vector3[] screenCorners = new Vector3[8];
-            for (int i = 0; i < 8; i++)
-            {
-                screenCorners[i] = camera.WorldToScreenPoint(corners[i]);
-            }
-
-            float minScreenX = float.MaxValue;
-            float maxScreenX = float.MinValue;
-            foreach (Vector3 screenCorner in screenCorners)
-            {
-                minScreenX = Mathf.Min(minScreenX, screenCorner.x);
-                maxScreenX = Mathf.Max(maxScreenX, screenCorner.x);
-            }
-
-            float widthScreen = maxScreenX - minScreenX;
-            return (camera.WorldToScreenPoint(componentTopPos), camera.WorldToScreenPoint(componentBottomPos), widthScreen);
-        }
-
-        private void DrawBoxESP(Vector3 bottomPos, Vector3 topPos, Color color, float width, bool snapLine, string label)
-        {
-            bottomPos = ScaleVector(bottomPos);
-            topPos = ScaleVector(topPos);
-
-            if (bottomPos.x < 0 || bottomPos.x > Screen.width || bottomPos.y < 0 || bottomPos.y > Screen.height)
-            {
-                return;
-            }
-
-            topPos.y = Screen.height - topPos.y;
-            bottomPos.y = Screen.height - bottomPos.y;
-
-            float height = topPos.y - bottomPos.y;
-            if (width < Math.Abs(height))
-            {
-                width = Math.Abs(height);
-            }
-
-            Render.DrawBox(bottomPos.x - (width / 2), bottomPos.y, width, height, color, 2f, label);
-
-            if (snapLine)
-            {
-                Render.DrawLine(new Vector2(Screen.width / 2, Screen.height / 2), new Vector2(bottomPos.x, bottomPos.y), color, 2f);
-            }
-        }
-
-        public static Vector3 ScaleVector(Vector3 position)
-        {
-            return new Vector3(
-                position.x / CameraManager.MainCam.pixelWidth * Screen.width,
-                position.y / CameraManager.MainCam.pixelHeight * Screen.height,
-                position.z
-            );
-        }
     }
 }

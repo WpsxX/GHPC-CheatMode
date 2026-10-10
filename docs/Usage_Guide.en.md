@@ -1,6 +1,6 @@
 # CheatMode Usage Guide (English)
 
-> Applies to `CheatMode.dll` v1.6.3. Covers **installation, feature reference, and usage notes**.
+> Applies to `CheatMode.dll` v1.6.4. Covers **installation, feature reference, and usage notes**.
 
 ---
 
@@ -76,6 +76,8 @@ CheatMode is split into five blocks; each can be toggled independently.
 - Press **`F8`** in-game to toggle; shows/hides **vehicle, ATGM and infantry** boxes together.
 - Faction colors: blue = Blue, red = Red, green = Green, yellow = Neutral, white = other; neutralized units turn gray.
 - Each label shows name + distance, e.g. `T-80BVM [342m]`.
+- ESP uses a fixed unlimited range and draws no snap lines; no extra configuration is required.
+- Boxes use the original wide/square proportions and upper-left labels. Initial boxes may appear over several frames in crowded scenes while collider discovery is spread across repaints.
 
 ---
 
