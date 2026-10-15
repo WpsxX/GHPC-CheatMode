@@ -8,6 +8,10 @@ All notable changes to the **CheatMode** all-in-one mod.
 - Compatible with 20261014.
 - Hotkeys changed to F9 and F10.
 
+### 变更
+- 适配 20261014。
+- 按键改为 F9、F10。
+
 ## [1.6.4] — 2026-10-10
 
 ### Fixed
