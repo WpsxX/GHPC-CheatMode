@@ -2,6 +2,12 @@
 
 All notable changes to the **CheatMode** all-in-one mod.
 
+## [1.6.5] — 2026-10-14
+
+### Changed
+- Compatible with 20261014.
+- Hotkeys changed to F9 and F10.
+
 ## [1.6.4] — 2026-10-10
 
 ### Fixed

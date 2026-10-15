@@ -124,12 +124,12 @@ namespace CheatMode
             FriendlyInvincible = _prefs.CreateEntry("FriendlyInvincible", true, "Friendly AI units: invincible");
             SelfInfiniteAmmo = _prefs.CreateEntry("SelfInfiniteAmmo", true, "Self unit: infinite ammo");
             FriendlyInfiniteAmmo = _prefs.CreateEntry("FriendlyInfiniteAmmo", true, "Friendly AI units: infinite ammo");
-            NoReload = _prefs.CreateEntry("NoReload", true, "Player vehicle: no reloading (F9 toggles; friendly AI unaffected)");
+            NoReload = _prefs.CreateEntry("NoReload", true, "Player vehicle: no reloading (F10 toggles; friendly AI unaffected)");
 
-            ESPEnabled = _prefs.CreateEntry("ESP", true, "ESP on/off (F8 toggles)");
+            ESPEnabled = _prefs.CreateEntry("ESP", true, "ESP on/off (F9 toggles)");
 
             HarmonyInstance.PatchAll();
-            MelonLogger.Msg("[CheatMode] Loaded. F8 = ESP on/off. F9 = no reload on/off. Settings are in MelonPreferences.cfg -> [CheatMode]");
+            MelonLogger.Msg("[CheatMode] Loaded. F9 = ESP on/off. F10 = no reload on/off. Settings are in MelonPreferences.cfg -> [CheatMode]");
         }
 
         public override void OnSceneWasLoaded(int buildIndex, string sceneName)
@@ -141,8 +141,8 @@ namespace CheatMode
 
         public override void OnUpdate()
         {
-            // F8: toggle vehicles, ATGM and infantry ESP together (on / off).
-            if (Input.GetKeyDown(KeyCode.F8))
+            // F9: toggle vehicles, ATGM and infantry ESP together (on / off).
+            if (Input.GetKeyDown(KeyCode.F9))
             {
                 if (ESPEnabled != null)
                 {
@@ -151,8 +151,8 @@ namespace CheatMode
                 }
             }
 
-            // F9: toggle vehicle-weapon "no reload" (refill the clip immediately instead of reloading) on / off.
-            if (Input.GetKeyDown(KeyCode.F9))
+            // F10: toggle vehicle-weapon "no reload" (refill the clip immediately instead of reloading) on / off.
+            if (Input.GetKeyDown(KeyCode.F10))
             {
                 if (NoReload != null)
                 {

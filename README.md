@@ -49,8 +49,8 @@ Built by integrating and hardening the ideas behind three community mods: [Infin
 
 - **Invincibility** — separately protect the player's own unit and/or friendly AI units.
 - **Infinite ammo** — player and/or friendly vehicles, infantry, throwables and crew-served weapon emplacements.
-- **No reload** (player vehicle only) — the clip never empties; toggled in-game with **F9**.
-- **ESP** — toggle vehicles, ATGM and infantry boxes together with **F8**; labels show distance.
+- **No reload** (player vehicle only) — the clip never empties; toggled in-game with **F10**.
+- **ESP** — toggle vehicles, ATGM and infantry boxes together with **F9**; labels show distance.
 
 All of the above can be switched on/off individually in `MelonPreferences.cfg`.
 
@@ -58,7 +58,7 @@ All of the above can be switched on/off individually in `MelonPreferences.cfg`.
 
 ## 2. Installation
 
-> Applies to `CheatMode.dll` v1.6.4.
+> Applies to `CheatMode.dll` v1.6.5.
 
 ### Prerequisites
 
@@ -84,7 +84,7 @@ All of the above can be switched on/off individually in `MelonPreferences.cfg`.
 5. To change defaults, exit the game and edit that file with a text editor, or use the in-game MelonLoader preferences panel.
 
 > **Verify it loaded:** the MelonLoader console / `Latest.log` should show:
-> `[CheatMode] Loaded. F8 = ESP on/off. F9 = no reload on/off. ...`
+> `[CheatMode] Loaded. F9 = ESP on/off. F10 = no reload on/off. ...`
 
 ### Uninstall
 
@@ -96,8 +96,8 @@ All of the above can be switched on/off individually in `MelonPreferences.cfg`.
 
 | Key | Action |
 |---|---|
-| `F8` | Toggle ESP (vehicles, ATGM & infantry together) on/off |
-| `F9` | Toggle vehicle-weapon "No Reload" on/off (player vehicle only) |
+| `F9` | Toggle ESP (vehicles, ATGM & infantry together) on/off |
+| `F10` | Toggle vehicle-weapon "No Reload" on/off (player vehicle only) |
 
 ---
 
@@ -132,14 +132,14 @@ CheatMode is split into five blocks; each can be toggled independently.
 
 | Setting | Default | Effect |
 |---|---|---|
-| `NoReload` | `true` | Vehicle weapons never need reloading; only the player's currently controlled vehicle is affected; friendly AI keep vanilla reload; toggled in-game with F9. |
+| `NoReload` | `true` | Vehicle weapons never need reloading; only the player's currently controlled vehicle is affected; friendly AI keep vanilla reload; toggled in-game with F10. |
 
 - When on, **only the vehicle you currently control** skips the reload flow and refills the clip directly for sustained fire.
 - **Friendly AI vehicles are unaffected**: even though they have infinite reserve ammo, they keep the vanilla reload cadence (more realistic, not overpowered).
 - While on, the top-left shows `CheatMode No Reload Enabled`.
 - It only manages weapons that belong to your vehicle and that have at least one infinite-ammo toggle active.
 
-> ✅ **Ammunition switching works while "No Reload" is on (fixed in 1.6.2):** selecting another type now swaps the clip **immediately** — `NoReloadAmmoSwitchPatch` issues one `FeedNewClip()` after a real type change, which the no-reload patch turns into an instant clip swap (no reload flow, no reload animation), and it keeps "clip + breech" equal to exactly one full clip (no extra round). Only the *current* clip changes; the round already in the breech keeps its old type until it is fired. (Before 1.6.2 you had to press **`F9`** off → switch → on again.)
+> ✅ **Ammunition switching works while "No Reload" is on (fixed in 1.6.2):** selecting another type now swaps the clip **immediately** — `NoReloadAmmoSwitchPatch` issues one `FeedNewClip()` after a real type change, which the no-reload patch turns into an instant clip swap (no reload flow, no reload animation), and it keeps "clip + breech" equal to exactly one full clip (no extra round). Only the *current* clip changes; the round already in the breech keeps its old type until it is fired. (Before 1.6.2 you had to press **`F10`** off → switch → on again.)
 
 ### 4.4 ESP
 
@@ -147,7 +147,7 @@ CheatMode is split into five blocks; each can be toggled independently.
 |---|---|---|
 | `ESP` | `true` | Master ESP switch. |
 
-- Press **`F8`** in-game to toggle; shows/hides **vehicle, ATGM and infantry** boxes together.
+- Press **`F9`** in-game to toggle; shows/hides **vehicle, ATGM and infantry** boxes together.
 - Faction colors: blue = Blue, red = Red, green = Green, yellow = Neutral, white = other; neutralized units turn gray.
 - Each label shows name + distance, e.g. `T-80BVM [342m]`.
 - ESP uses a fixed unlimited range and draws no snap lines; no extra configuration is required.
@@ -175,7 +175,7 @@ See [optimization notes (Chinese)](docs/Optimization_Notes.zh-CN.md) for changes
 
 - **Not loading / no `[CheatMode] Loaded` in log** → verify the DLL is in `Bin\Mods\`, MelonLoader version, and game path references.
 - **Startup error "Another instance of CheatMode is already loaded"** → two copies are in `Mods`; delete the extra.
-- **ESP invisible** → press F8 to confirm it is on; ensure the target is in view and is not the unit you are in.
+- **ESP invisible** → press F9 to confirm it is on; ensure the target is in view and is not the unit you are in.
 
 ---
 
